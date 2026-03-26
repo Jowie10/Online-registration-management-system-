@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Visitor Management | Check In/Out</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="visitor-container">
+        <div class="header">
+            <h1><i class="fas fa-building"></i> Visitor Registration</h1>
+            <p>Please check in or out using this form</p>
+        </div>
+
+        <!-- Check In Form -->
+        <div id="checkinForm" class="form-card">
+            <h2><i class="fas fa-sign-in-alt"></i> Check In</h2>
+            <form id="visitorCheckinForm">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Full Name *</label>
+                    <input type="text" id="visitorName" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-phone-alt"></i> Phone Number *</label>
+                    <input type="tel" id="visitorPhone" placeholder="+1234567890" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-briefcase"></i> Purpose of Visit</label>
+                    <select id="visitorPurpose">
+                        <option value="Meeting">Meeting</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Delivery">Delivery</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user-tag"></i> Visiting (Optional)</label>
+                    <input type="text" id="visitingPerson" placeholder="Person/Department">
+                </div>
+                <button type="submit" class="btn-primary"><i class="fas fa-check-circle"></i> Check In</button>
+            </form>
+        </div>
+
+        <!-- Check Out Form -->
+        <div id="checkoutForm" class="form-card">
+            <h2><i class="fas fa-sign-out-alt"></i> Check Out</h2>
+            <div class="info-note">
+                <i class="fas fa-info-circle"></i> Enter your phone number to check out
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-phone-alt"></i> Phone Number</label>
+                <input type="tel" id="checkoutPhone" placeholder="Enter registered phone number">
+            </div>
+            <button id="checkoutBtn" class="btn-secondary"><i class="fas fa-sign-out-alt"></i> Check Out</button>
+            <div id="activeVisitorsList" class="active-list">
+                <h4><i class="fas fa-users"></i> Active Visitors</h4>
+                <div id="activeVisitorsContainer"></div>
+            </div>
+        </div>
+
+        <!-- Message Area -->
+        <div id="messageArea" class="message-area"></div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
