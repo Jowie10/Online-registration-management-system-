@@ -1,11 +1,12 @@
 // Firebase Configuration - REPLACE WITH YOUR OWN FIREBASE PROJECT CREDENTIALS
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "your-sender-id",
-    appId: "your-app-id"
+  apiKey: "AIzaSyDJwJrrhF6LKboNZpwH7-07IHSApN5vKXg",
+  authDomain: "qr-code-sign-in-91fce.firebaseapp.com",
+  projectId: "qr-code-sign-in-91fce",
+  storageBucket: "qr-code-sign-in-91fce.firebasestorage.app",
+  messagingSenderId: "480973024477",
+  appId: "1:480973024477:web:13686e41a0856a79af7f34",
+  measurementId: "G-6K6WTZSTB9"
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
