@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrance QR Code Signage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0a2b4e;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+        }
+        
+        .signage {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .university-logo {
+            margin-bottom: 20px;
+        }
+        
+        .university-logo h1 {
+            font-size: 2rem;
+            color: #0a2b4e;
+        }
+        
+        .university-logo p {
+            color: #64748b;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 30px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        
+        .qr-container img {
+            width: 250px;
+            height: 250px;
+        }
+        
+        .instructions {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #0a2b4e;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            color: #334155;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .signage {
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signage">
+        <div class="university-logo">
+            <h1>🏛️ ISBAT UNIVERSITY</h1>
+            <p>Chartered University | Empowering Lives</p>
+        </div>
+        
+        <div class="qr-container" id="qrContainer">
+            <img id="entranceQR" alt="Scan to Check In">
+        </div>
+        
+        <h2>📱 SCAN TO CHECK IN</h2>
+        <p style="color: #475569; margin-top: 5px;">All visitors must check in at reception</p>
+        
+        <div class="instructions">
+            <h3>📋 Instructions for Visitors:</h3>
+            <ol>
+                <li>Scan this QR code with your phone camera</li>
+                <li>Fill in your name and phone number</li>
+                <li>Select your purpose of visit</li>
+                <li>After check-in, <strong>SAVE the QR code</strong> shown on your screen</li>
+                <li>Use that QR code to <strong>CHECK OUT</strong> when leaving</li>
+            </ol>
+        </div>
+        
+        <div class="footer">
+            <p>For assistance, please contact reception | Tel: +256 758 237 525</p>
+        </div>
+    </div>
+    
+    <script>
+        // Generate the entrance QR code
+        const currentUrl = window.location.origin;
+        const entranceUrl = `${currentUrl}/index.html`;
+        const qrImg = document.getElementById('entranceQR');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(entranceUrl)}`;
+    </script>
+</body>
+</html>

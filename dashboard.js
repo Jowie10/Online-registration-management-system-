@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, orderBy, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Firebase Configuration - REPLACE WITH YOUR OWN FIREBASE PROJECT CREDENTIALS
 const firebaseConfig = {
@@ -15,14 +15,25 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const visitorsCollection = collection(db, "visitors");
 
-// Get the current page URL for QR code
+// Check if 11.png loaded, if not show fallback
+const dashboardBg = document.querySelector('.dashboard-bg');
+if (dashboardBg) {
+    const img = new Image();
+    img.onload = () => {
+        dashboardBg.classList.remove('image-load-error');
+    };
+    img.onerror = () => {
+        dashboardBg.classList.add('image-load-error');
+    };
+    img.src = '11.png';
+}
+
 const currentUrl = window.location.origin;
 const visitorFormUrl = `${currentUrl}/index.html`;
 
 let allVisitors = [];
 let reportsHistory = [];
 
-// DOM Elements
 const tableBody = document.getElementById('tableBody');
 const currentlyInsideCount = document.getElementById('currentlyInsideCount');
 const leftTodayCount = document.getElementById('leftTodayCount');
@@ -42,7 +53,6 @@ const staticQRDiv = document.getElementById('staticQRCode');
 const downloadQRBtn = document.getElementById('downloadQRBtn');
 const sendEmailBtn = document.getElementById('sendEmailBtn');
 
-// Generate static QR code for entrance
 function generateEntranceQR() {
     if (!staticQRDiv) return;
     staticQRDiv.innerHTML = '';
@@ -75,7 +85,6 @@ if (downloadQRBtn) {
     });
 }
 
-// Load reports from localStorage
 function loadReportsHistory() {
     const saved = localStorage.getItem('visitor_reports');
     if (saved) reportsHistory = JSON.parse(saved);
@@ -89,12 +98,12 @@ function saveReportsHistory() {
 function renderReportsList() {
     if (!reportsListDiv) return;
     if (!reportsHistory.length) {
-        reportsListDiv.innerHTML = '<p style="color: #6b7280;">No reports generated yet. Click Export to create reports.</p>';
+        reportsListDiv.innerHTML = '<p style="color: #6b7280;">No reports generated yet.</p>';
         return;
     }
     reportsListDiv.innerHTML = reportsHistory.map((report, idx) => `
         <div class="report-item">
-            <span><i class="fas fa-file-${report.type === 'pdf' ? 'pdf' : 'csv'}"></i> ${report.name} (${new Date(report.date).toLocaleString()})</span>
+            <span><i class="fas fa-file-${report.type === 'pdf' ? 'pdf' : 'csv'}"></i> ${report.name}</span>
             <div>
                 <button onclick="window.downloadReport(${idx})" style="background:none;border:none;cursor:pointer;"><i class="fas fa-download"></i></button>
                 <button onclick="window.deleteReport(${idx})" style="background:none;border:none;cursor:pointer;"><i class="fas fa-trash"></i></button>
@@ -120,11 +129,10 @@ window.deleteReport = (idx) => {
 window.viewDetails = (id) => {
     const visitor = allVisitors.find(v => v.id === id);
     if (visitor) {
-        alert(`Visitor Details:\n\nName: ${visitor.name}\nPhone: ${visitor.phone}\nID: ${visitor.visitorId}\nPurpose: ${visitor.purpose}\nVisiting: ${visitor.visitingPerson || 'N/A'}\nEntry: ${visitor.entryTime?.toDate?.().toLocaleString() || new Date(visitor.entryTime).toLocaleString()}\nExit: ${visitor.exitTime ? (visitor.exitTime.toDate?.().toLocaleString() || new Date(visitor.exitTime).toLocaleString()) : 'Not checked out'}\nStatus: ${visitor.status === 'checked-in' ? 'Currently Inside' : 'Left'}`);
+        alert(`Visitor Details:\n\nName: ${visitor.name}\nPhone: ${visitor.phone}\nID: ${visitor.visitorId}\nPurpose: ${visitor.purpose}\nVisiting: ${visitor.visitingPerson || 'N/A'}\nEntry: ${visitor.entryTime?.toDate?.().toLocaleString()}\nExit: ${visitor.exitTime ? visitor.exitTime.toDate?.().toLocaleString() : 'Not checked out'}\nStatus: ${visitor.status === 'checked-in' ? 'Inside' : 'Left'}`);
     }
 };
 
-// Real-time listener
 function startRealtimeListener() {
     onSnapshot(visitorsCollection, (snapshot) => {
         allVisitors = [];
@@ -153,7 +161,6 @@ function updateStats() {
         const entryDate = v.entryTime.toDate ? v.entryTime.toDate() : new Date(v.entryTime);
         return entryDate.toDateString() === today;
     }).length;
-
     if (currentlyInsideCount) currentlyInsideCount.textContent = currentlyInside;
     if (leftTodayCount) leftTodayCount.textContent = leftTodayCountVal;
     if (totalDailyCount) totalDailyCount.textContent = totalDaily;
@@ -170,9 +177,7 @@ function applyFiltersAndRender() {
         );
     }
     const status = statusFilter?.value || 'all';
-    if (status !== 'all') {
-        filtered = filtered.filter(v => v.status === status);
-    }
+    if (status !== 'all') filtered = filtered.filter(v => v.status === status);
     if (dateFilter?.value) {
         const filterDate = new Date(dateFilter.value).toDateString();
         filtered = filtered.filter(v => {
@@ -214,7 +219,6 @@ function escapeHtml(str) {
     });
 }
 
-// Export functions
 function exportToCSV() {
     const headers = ['VisitorID', 'Name', 'Phone', 'Purpose', 'Visiting', 'EntryTime', 'ExitTime', 'Status'];
     const rows = allVisitors.map(v => [
@@ -232,7 +236,7 @@ function exportToCSV() {
 
 function exportToPDF() {
     if (typeof jspdf === 'undefined') {
-        alert("jsPDF library not loaded. Please check your internet connection.");
+        alert("jsPDF library not loaded.");
         return;
     }
     const { jsPDF } = jspdf;
@@ -243,12 +247,11 @@ function exportToPDF() {
     doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28);
     doc.text(`Total Visitors: ${allVisitors.length}`, 20, 35);
     doc.text(`Currently Inside: ${allVisitors.filter(v => v.status === 'checked-in').length}`, 20, 41);
-    
     let y = 50;
     doc.setFontSize(9);
     allVisitors.forEach((v, idx) => {
         if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${idx + 1}. ${v.name} (${v.visitorId}) - ${v.status === 'checked-in' ? 'Inside' : 'Left'} - ${v.purpose || 'No purpose'}`, 20, y);
+        doc.text(`${idx + 1}. ${v.name} (${v.visitorId}) - ${v.status === 'checked-in' ? 'Inside' : 'Left'}`, 20, y);
         y += 6;
     });
     const pdfBlob = doc.output('blob');
@@ -264,7 +267,6 @@ function saveReport(name, dataUrl, type) {
     renderReportsList();
 }
 
-// Email modal handling
 function emailReport() {
     if (emailModal) emailModal.style.display = 'flex';
 }
@@ -280,28 +282,11 @@ if (sendEmailBtn) {
             alert("Please enter recipient email");
             return;
         }
-        
-        const headers = ['VisitorID', 'Name', 'Phone', 'Purpose', 'Visiting', 'EntryTime', 'ExitTime', 'Status'];
-        const rows = allVisitors.map(v => [
-            v.visitorId, v.name, v.phone, v.purpose || '', v.visitingPerson || '',
-            v.entryTime?.toDate ? v.entryTime.toDate().toLocaleString() : new Date(v.entryTime).toLocaleString(),
-            v.exitTime ? (v.exitTime.toDate ? v.exitTime.toDate().toLocaleString() : new Date(v.exitTime).toLocaleString()) : '',
-            v.status === 'checked-in' ? 'Inside' : 'Left'
-        ]);
-        const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-        
         const subject = encodeURIComponent('Visitor Management Report');
-        const body = encodeURIComponent(`Please find attached the visitor report.\n\nReport generated on: ${new Date().toLocaleString()}\n\nTotal Visitors: ${allVisitors.length}\nCurrently Inside: ${allVisitors.filter(v => v.status === 'checked-in').length}\n\nNote: This is a simulated email. In production, you would use a backend email service.\n\nReport Data:\n${csvContent.substring(0, 1000)}...`);
-        
+        const body = encodeURIComponent(`Visitor Report\nGenerated: ${new Date().toLocaleString()}\nTotal Visitors: ${allVisitors.length}\nCurrently Inside: ${allVisitors.filter(v => v.status === 'checked-in').length}`);
         window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-        
-        alert(`Email client opened for ${email}\n\nIn production, you would use a backend service to send the report as an attachment.`);
-        
+        alert(`Email client opened for ${email}`);
         if (emailModal) emailModal.style.display = 'none';
-        const emailInput = document.getElementById('emailRecipient');
-        const messageInput = document.getElementById('emailMessage');
-        if (emailInput) emailInput.value = '';
-        if (messageInput) messageInput.value = '';
     });
 }
 
@@ -320,3 +305,37 @@ if (dateFilter) dateFilter.addEventListener('change', applyFiltersAndRender);
 
 loadReportsHistory();
 startRealtimeListener();
+
+// ============================================
+// AUTO-UPDATING TIME & DATE
+// ============================================
+
+function updateDateTime() {
+    const now = new Date();
+    
+    // Format date: 28/05/2026
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const dateString = `${day}/${month}/${year}`;
+    
+    // Format time: 22:08:26
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeString = `${hours}:${minutes}:${seconds}`;
+    
+    // Update footer
+    const footerDate = document.getElementById('footerDate');
+    const footerTime = document.getElementById('footerTime');
+    if (footerDate) footerDate.textContent = dateString;
+    if (footerTime) footerTime.textContent = timeString;
+    
+    // Update header time if exists
+    const headerTime = document.getElementById('headerTime');
+    if (headerTime) headerTime.textContent = timeString;
+}
+
+// Update every second
+setInterval(updateDateTime, 1000);
+updateDateTime();

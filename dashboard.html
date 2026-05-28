@@ -3,62 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reception Dashboard | Visitor Management</title>
+    <title>Reception Dashboard | ISBAT University</title>
     <link rel="stylesheet" href="dashboard.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <!-- Bold Watermark -->
-    <div class="dashboard-watermark"></div>
+    <!-- Background -->
+    <div class="dashboard-bg"></div>
 
     <div class="dashboard-container">
-        <div class="dashboard-header">
-            <h1><i class="fas fa-chalkboard-user"></i> Reception Dashboard</h1>
-            <div class="header-actions">
-                <button id="refreshBtn" class="icon-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <button id="exportPdfBtn" class="icon-btn"><i class="fas fa-file-pdf"></i> Export PDF</button>
-                <button id="exportCsvBtn" class="icon-btn"><i class="fas fa-file-csv"></i> Export CSV</button>
-                <button id="emailReportBtn" class="icon-btn"><i class="fas fa-envelope"></i> Email Report</button>
-                <button id="viewQRBtn" class="icon-btn"><i class="fas fa-qrcode"></i> View Entry QR</button>
+        <!-- Hero Banner with Logo -->
+        <div class="hero-banner">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-logo">
+                    <img src="isbat logos.png" alt="ISBAT University Logo" onerror="this.src='https://placehold.co/70x70/002868/white?text=ISBAT'">
+                </div>
+                <div class="hero-text">
+                    <h1>ISBAT UNIVERSITY</h1>
+                    <p>A CHARTERED UNIVERSITY</p>
+                    <div class="hero-tagline">
+                        <span>Empowering Lives</span>
+                        <span>Empowering Uganda</span>
+                        <span>Empowering Africa</span>
+                    </div>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <i class="fas fa-users"></i>
+                        <span id="heroInsideCount">0</span>
+                        <small>Inside Campus</small>
+                    </div>
+                    <div class="hero-stat">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="heroTodayCount">0</span>
+                        <small>Today's Visitors</small>
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-bar">
+            <button id="refreshBtn" class="action-btn-main"><i class="fas fa-sync-alt"></i> Refresh</button>
+            <button id="exportPdfBtn" class="action-btn-main"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            <button id="exportCsvBtn" class="action-btn-main"><i class="fas fa-file-csv"></i> Export CSV</button>
+            <button id="emailReportBtn" class="action-btn-main"><i class="fas fa-envelope"></i> Email Report</button>
+            <button id="viewQRBtn" class="action-btn-main"><i class="fas fa-qrcode"></i> View Entry QR</button>
         </div>
 
         <!-- Stats Cards -->
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
                 <div class="stat-info">
                     <h3 id="currentlyInsideCount">0</h3>
                     <p>Visitors Currently Inside</p>
+                    <div class="stat-trend">Active Now</div>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-sign-out-alt"></i>
-                </div>
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon"><i class="fas fa-sign-out-alt"></i></div>
                 <div class="stat-info">
                     <h3 id="leftTodayCount">0</h3>
                     <p>Visitors Who Left</p>
+                    <div class="stat-trend">Completed Today</div>
                 </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-day"></i>
-                </div>
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
                 <div class="stat-info">
                     <h3 id="totalDailyCount">0</h3>
                     <p>Total Daily Visitors</p>
+                    <div class="stat-trend">Today's Traffic</div>
+                </div>
+            </div>
+            <div class="stat-card stat-card-4">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="stat-info">
+                    <h3 id="avgStayTime">0</h3>
+                    <p>Average Stay Duration</p>
+                    <div class="stat-trend">Minutes</div>
                 </div>
             </div>
         </div>
 
-        <!-- Search & Filter -->
+        <!-- Quick Info -->
+        <div class="quick-info">
+            <div class="info-chip"><i class="fas fa-building"></i> Most Visited: <strong id="mostVisitedDept">Administration</strong></div>
+            <div class="info-chip"><i class="fas fa-chart-line"></i> Peak Hour: <strong id="peakHour">10:00 - 11:00</strong></div>
+            <div class="info-chip"><i class="fas fa-hourglass-half"></i> Longest Stay: <strong id="longestStay">--</strong></div>
+            <div class="info-chip"><i class="fas fa-temperature-high"></i> 21°C / Clear</div>
+        </div>
+
+        <!-- Search Section -->
         <div class="search-section">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -70,7 +112,18 @@
                     <option value="checked-in">Currently Inside</option>
                     <option value="checked-out">Checked Out</option>
                 </select>
+                <select id="purposeFilter">
+                    <option value="all">All Purposes</option>
+                    <option value="Administration">Administration</option>
+                    <option value="Registration">Registration</option>
+                    <option value="Meeting">Meeting</option>
+                    <option value="Interview">Interview</option>
+                    <option value="Delivery">Delivery</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Other">Other</option>
+                </select>
                 <input type="date" id="dateFilter">
+                <button id="clearFiltersBtn" class="filter-clear"><i class="fas fa-times-circle"></i> Clear</button>
             </div>
         </div>
 
@@ -79,52 +132,91 @@
             <table id="visitorsTable">
                 <thead>
                     <tr>
-                        <th>Visitor ID</th>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Purpose</th>
-                        <th>Visiting</th>
-                        <th>Entry Time</th>
-                        <th>Exit Time</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th><i class="fas fa-id-card"></i> VISITOR ID</th>
+                        <th><i class="fas fa-user"></i> NAME</th>
+                        <th><i class="fas fa-phone"></i> PHONE</th>
+                        <th><i class="fas fa-briefcase"></i> PURPOSE</th>
+                        <th><i class="fas fa-user-tie"></i> VISITING</th>
+                        <th><i class="fas fa-clock"></i> ENTRY TIME</th>
+                        <th><i class="fas fa-hourglass-start"></i> EXIT TIME</th>
+                        <th><i class="fas fa-flag-checkered"></i> STATUS</th>
+                        <th><i class="fas fa-cog"></i> ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="9" style="text-align:center;">Loading visitors...</td</tr>
+                    <tr><td colspan="9" class="empty-state"><i class="fas fa-user-friends"></i><p>No visitors found</p></td></tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Report History Section -->
-        <div class="reports-section">
-            <h3><i class="fas fa-archive"></i> Generated Reports</h3>
-            <div id="reportsList" class="reports-list">
-                <p style="color: #6b7280;">No reports generated yet. Click Export to create reports.</p>
+        <!-- Two Column Bottom Section -->
+        <div class="two-column">
+            <div class="card-section">
+                <div class="card-header">
+                    <i class="fas fa-archive"></i>
+                    <h3>Generated Reports</h3>
+                </div>
+                <div id="reportsList" class="reports-list">
+                    <div class="empty-reports"><i class="fas fa-file-alt"></i><p>No reports generated yet</p></div>
+                </div>
+                <div class="card-actions">
+                    <button class="card-btn pdf" onclick="window.exportToPDF?.()"><i class="fas fa-file-pdf"></i> PDF</button>
+                    <button class="card-btn csv" onclick="window.exportToCSV?.()"><i class="fas fa-file-csv"></i> CSV</button>
+                    <button class="card-btn email" onclick="window.emailReport?.()"><i class="fas fa-envelope"></i> Email</button>
+                </div>
+            </div>
+
+            <div class="card-section">
+                <div class="card-header">
+                    <i class="fas fa-rss"></i>
+                    <h3>Recent Activity</h3>
+                </div>
+                <div id="activityFeed" class="activity-feed">
+                    <div class="empty-activity"><i class="fas fa-bell-slash"></i><p>Waiting for activity...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="dashboard-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-university"></i>
+                    <span>ISBAT UNIVERSITY</span>
+                    <small>A Chartered University</small>
+                </div>
+                <div class="footer-motto">
+                    <i class="fas fa-heart"></i>
+                    <span>Empowering Lives | Empowering Uganda | Empowering Africa</span>
+                </div>
+                <div class="footer-datetime">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="footerDate">28/05/2026</span>
+                    <i class="fas fa-clock"></i>
+                    <span id="footerTime">22:08:26</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- QR Code Modal -->
+    <!-- Modals -->
     <div id="qrModal" class="modal">
-        <div class="modal-content" style="text-align: center;">
+        <div class="modal-content">
             <span class="close-qr">&times;</span>
             <h3><i class="fas fa-qrcode"></i> Entry QR Code</h3>
-            <p>Place this QR code at the entrance for visitors to scan</p>
-            <div id="staticQRCode" style="margin: 20px 0;"></div>
-            <p class="qr-note">Visitors scan this QR to access the check-in/out form</p>
-            <button id="downloadQRBtn" class="btn-small"><i class="fas fa-download"></i> Download QR Code</button>
+            <p>Scan to check in at the entrance</p>
+            <div id="staticQRCode" style="display: flex; justify-content: center; margin: 20px 0;"></div>
+            <button id="downloadQRBtn" class="modal-btn">Download QR Code</button>
         </div>
     </div>
 
-    <!-- Email Modal -->
     <div id="emailModal" class="modal">
         <div class="modal-content">
             <span class="close-email">&times;</span>
-            <h3><i class="fas fa-paper-plane"></i> Email Weekly Report</h3>
-            <input type="email" id="emailRecipient" placeholder="recipient@example.com" class="email-input">
+            <h3><i class="fas fa-paper-plane"></i> Email Report</h3>
+            <input type="email" id="emailRecipient" placeholder="recipient@example.com">
             <textarea id="emailMessage" placeholder="Optional message..." rows="3"></textarea>
-            <button id="sendEmailBtn" class="action-btn">Send Report</button>
+            <button id="sendEmailBtn" class="modal-btn">Send Report</button>
         </div>
     </div>
 
