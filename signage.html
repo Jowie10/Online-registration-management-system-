@@ -149,21 +149,21 @@
         </div>
     </div>
     
-    <script>
-        // Generate the entrance QR code
-        const currentUrl = window.location.origin;
-        const entranceUrl = `${currentUrl}/index.html`;
-        const qrImg = document.getElementById('entranceQR');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=000000&bgcolor=FFFFFF&data=${encodeURIComponent(entranceUrl)}`;
-        
-        // Optional: If logo fails to load, display a fallback text (subtle, no emoji)
-        const logoImg = document.querySelector('.logo-container img');
-        if (logoImg) {
-            logoImg.addEventListener('error', function() {
-                // Silently fail - container remains empty but layout stays consistent
-                this.style.display = 'none';
-            });
-        }
-    </script>
+ <script>
+    // YOUR LIVE GITHUB PAGES URL - HARDCODED
+    const entranceUrl = "https://jowie10.github.io/Online-registration-management-system-/index.html";
+    const qrImg = document.getElementById('entranceQR');
+    
+    // Generate QR code with your live URL
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=002868&bgcolor=FFFFFF&data=${encodeURIComponent(entranceUrl)}`;
+    
+    // Also update the test URL display
+    const testUrlElement = document.getElementById('testUrl');
+    if (testUrlElement) {
+        testUrlElement.textContent = entranceUrl;
+    }
+    
+    console.log('Entrance QR Code generated for URL:', entranceUrl);
+</script>
 </body>
 </html>
