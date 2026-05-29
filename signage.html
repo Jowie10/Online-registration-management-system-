@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrance QR Code Signage</title>
+    <title>ISBAT University | Visitor Check-In</title>
     <style>
         * {
             margin: 0;
@@ -17,7 +17,7 @@
             justify-content: center;
             align-items: center;
             background: #0a2b4e;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             padding: 20px;
         }
         
@@ -31,17 +31,17 @@
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
         
-        .university-logo {
+        .logo-container {
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
-        .university-logo h1 {
-            font-size: 2rem;
-            color: #0a2b4e;
-        }
-        
-        .university-logo p {
-            color: #64748b;
+        .logo-container img {
+            max-width: 180px;
+            height: auto;
+            display: block;
         }
         
         .qr-container {
@@ -51,11 +51,26 @@
             display: inline-block;
             margin: 20px 0;
             box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            border: 2px solid #0a2b4e;
         }
         
         .qr-container img {
             width: 250px;
             height: 250px;
+            display: block;
+        }
+        
+        h2 {
+            color: #0a2b4e;
+            margin-top: 10px;
+            font-weight: 600;
+            font-size: 1.6rem;
+        }
+        
+        .check-in-subtitle {
+            color: #475569;
+            margin-top: 5px;
+            font-size: 0.95rem;
         }
         
         .instructions {
@@ -69,6 +84,8 @@
         .instructions h3 {
             color: #0a2b4e;
             margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1.2rem;
         }
         
         .instructions ol {
@@ -78,6 +95,7 @@
         
         .instructions li {
             margin: 10px 0;
+            line-height: 1.4;
         }
         
         .footer {
@@ -102,31 +120,32 @@
 </head>
 <body>
     <div class="signage">
-        <div class="university-logo">
-            <h1>🏛️ ISBAT UNIVERSITY</h1>
-            <p>Chartered University | Empowering Lives</p>
+        <!-- Logo Section: isbat logos.png -->
+        <div class="logo-container">
+            <img src="isbat logos.png" alt="ISBAT University Logo" onerror="this.style.display='none'">
         </div>
         
-        <div class="qr-container" id="qrContainer">
+        <!-- QR Code Section -->
+        <div class="qr-container">
             <img id="entranceQR" alt="Scan to Check In">
         </div>
         
-        <h2>📱 SCAN TO CHECK IN</h2>
-        <p style="color: #475569; margin-top: 5px;">All visitors must check in at reception</p>
+        <h2>SCAN TO CHECK IN</h2>
+        <p class="check-in-subtitle">All visitors must check in at reception</p>
         
         <div class="instructions">
-            <h3>📋 Instructions for Visitors:</h3>
+            <h3>Instructions for Visitors:</h3>
             <ol>
                 <li>Scan this QR code with your phone camera</li>
                 <li>Fill in your name and phone number</li>
                 <li>Select your purpose of visit</li>
-                <li>After check-in, <strong>SAVE the QR code</strong> shown on your screen</li>
-                <li>Use that QR code to <strong>CHECK OUT</strong> when leaving</li>
+                <li>Complete your check-in</li>
+                <li>Proceed to your destination within the university</li>
             </ol>
         </div>
         
         <div class="footer">
-            <p>For assistance, please contact reception | Tel: +256 758 237 525</p>
+            <p>For assistance, please contact reception | Tel: +256 758 237 525 | info@isbatuniversity.ac.ug</p>
         </div>
     </div>
     
@@ -135,7 +154,16 @@
         const currentUrl = window.location.origin;
         const entranceUrl = `${currentUrl}/index.html`;
         const qrImg = document.getElementById('entranceQR');
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(entranceUrl)}`;
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=000000&bgcolor=FFFFFF&data=${encodeURIComponent(entranceUrl)}`;
+        
+        // Optional: If logo fails to load, display a fallback text (subtle, no emoji)
+        const logoImg = document.querySelector('.logo-container img');
+        if (logoImg) {
+            logoImg.addEventListener('error', function() {
+                // Silently fail - container remains empty but layout stays consistent
+                this.style.display = 'none';
+            });
+        }
     </script>
 </body>
 </html>
