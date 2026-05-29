@@ -9,15 +9,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- QR Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- QR Scanner Library removed -->
 </head>
 <body>
     <!-- Background Watermark Slideshow -->
     <div class="bg-slideshow">
-        <div class="bg-slideshow-track" id="bgSlideshowTrack">
-            <!-- Background images will be injected here -->
-        </div>
+        <div class="bg-slideshow-track" id="bgSlideshowTrack"></div>
         <div class="bg-overlay"></div>
     </div>
 
@@ -69,38 +66,31 @@
                     <i class="fas fa-check-circle"></i> Check In
                 </button>
             </form>
-            
-            <!-- QR Code Result -->
-            <div id="qrResultArea" style="display: none; margin-top: 20px;">
-                <div class="qr-card">
-                    <h3><i class="fas fa-qrcode"></i> Your Check-out QR Code</h3>
-                    <div id="qrCodeCanvas"></div>
-                    <p id="qrVisitorIdMsg" class="qr-info"></p>
-                    <button id="downloadQRBtn" class="btn-small">
-                        <i class="fas fa-download"></i> Save QR Code
-                    </button>
+
+            <!-- Success Message (No QR code) -->
+            <div id="successArea" style="display: none; margin-top: 20px;">
+                <div class="success-card">
+                    <i class="fas fa-check-circle" style="font-size: 48px; color: #10b981;"></i>
+                    <h3>Check-in Successful!</h3>
+                    <p>You are now registered. When leaving, click "Check Out" and enter your phone number.</p>
                 </div>
             </div>
         </div>
 
-        <!-- Check Out Panel -->
+        <!-- Check Out Panel - Phone number only (QR scanner removed) -->
         <div id="exitPanel" class="form-card">
             <h2><i class="fas fa-sign-out-alt"></i> Check Out</h2>
             <div class="info-note">
-                <i class="fas fa-info-circle"></i> Scan your QR code to check out
+                <i class="fas fa-info-circle"></i> Enter the phone number you used to check in
             </div>
-            <div id="qr-reader" style="width: 100%;"></div>
-            <div id="exitScanResult" class="scan-result"></div>
-            <div id="manualCheckout" class="manual-checkout">
-                <p class="divider">OR</p>
-                <div class="form-group">
-                    <label><i class="fas fa-phone-alt"></i> Check out by Phone</label>
-                    <input type="tel" id="checkoutPhone" placeholder="Enter registered phone number">
-                    <button id="manualCheckoutBtn" class="btn-secondary" style="margin-top: 10px;">
-                        <i class="fas fa-sign-out-alt"></i> Check Out by Phone
-                    </button>
-                </div>
+            <div class="form-group">
+                <label><i class="fas fa-phone-alt"></i> Phone Number *</label>
+                <input type="tel" id="checkoutPhone" placeholder="Enter your phone number" required>
             </div>
+            <button id="manualCheckoutBtn" class="btn-primary">
+                <i class="fas fa-sign-out-alt"></i> Check Out
+            </button>
+            <div id="exitMessage" class="scan-result" style="margin-top: 15px;"></div>
         </div>
 
         <!-- Message Area -->
