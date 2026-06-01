@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Smart QR Code | ISBAT University</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 32px;
+            padding: 30px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #002868;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #475569;
+            margin-bottom: 20px;
+        }
+        .qr-box {
+            background: white;
+            padding: 20px;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .qr-box img {
+            max-width: 250px;
+            height: auto;
+        }
+        .url-display {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            word-break: break-all;
+            margin: 15px 0;
+            color: #334155;
+        }
+        .size-control {
+            margin: 15px 0;
+            text-align: left;
+        }
+        .size-control label {
+            display: block;
+            font-size: 0.8rem;
+            color: #002868;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        .size-control input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 40px;
+            border: 1px solid #cbd5e1;
+        }
+        button {
+            background: #002868;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #003a7a;
+            transform: translateY(-2px);
+        }
+        .note {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 Smart QR Code</h1>
+        <p>Scan this QR code at the gate – it handles both check‑in and check‑out automatically.</p>
+
+        <div class="url-display" id="urlDisplay">Loading URL...</div>
+
+        <div class="size-control">
+            <label>🖨️ Printed QR size (pixels):</label>
+            <input type="range" id="qrSizeSlider" min="200" max="800" value="600" step="10">
+            <span id="sizeValue" style="margin-left: 10px;">600px</span>
+        </div>
+
+        <div class="qr-box">
+            <img id="qrImage" alt="QR Code">
+        </div>
+
+        <button id="downloadBtn">⬇️ Download QR Code (PNG)</button>
+        <button id="printBtn">🖨️ Print QR Code (Large)</button>
+
+        <div class="note">
+            <strong>📌 Instructions:</strong><br>
+            - Adjust the slider to set the size of the printed QR code.<br>
+            - Click "Print QR Code" to open a print‑optimised page with your chosen size.<br>
+            - Place the printed QR at the <strong>main entrance</strong> (and also at the exit).
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Get the full URL of scan.html in the same folder
+            function getScanUrl() {
+                let currentUrl = window.location.href;
+                let baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+                return baseUrl + 'scan.html';
+            }
+
+            const scanUrl = getScanUrl();
+            document.getElementById('urlDisplay').innerHTML = `🔗 QR points to: <strong>${scanUrl}</strong>`;
+
+            const qrImage = document.getElementById('qrImage');
+            const sizeSlider = document.getElementById('qrSizeSlider');
+            const sizeValue = document.getElementById('sizeValue');
+
+            // Preview size for screen (fixed at 250px)
+            const previewSize = 250;
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=${previewSize}x${previewSize}&data=${encodeURIComponent(scanUrl)}`;
+
+            // Update displayed size value when slider moves
+            sizeSlider.addEventListener('input', function() {
+                sizeValue.textContent = sizeSlider.value + 'px';
+            });
+
+            // Download QR code at the chosen size
+            document.getElementById('downloadBtn').addEventListener('click', function() {
+                const downloadSize = sizeSlider.value;
+                const downloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${downloadSize}x${downloadSize}&data=${encodeURIComponent(scanUrl)}`;
+                const link = document.createElement('a');
+                link.download = `smart_gate_qr_${downloadSize}px.png`;
+                link.href = downloadUrl;
+                link.click();
+            });
+
+            // Print: create a new window with the large QR (no document.write errors)
+            document.getElementById('printBtn').addEventListener('click', function() {
+                const printSize = sizeSlider.value;
+                const printQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${printSize}x${printSize}&data=${encodeURIComponent(scanUrl)}`;
+                
+                // Create a new window with a basic HTML structure
+                const printWindow = window.open('', '_blank', 'width=600,height=700');
+                if (!printWindow) {
+                    alert("Popup blocked. Please allow popups for this site.");
+                    return;
+                }
+                
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Print Smart QR Code</title>
+                        <style>
+                            body {
+                                margin: 0;
+                                padding: 20px;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                                background: white;
+                            }
+                            .print-container {
+                                text-align: center;
+                                width: 100%;
+                            }
+                            img {
+                                max-width: 100%;
+                                height: auto;
+                                display: block;
+                                margin: 0 auto;
+                            }
+                            p {
+                                margin-top: 30px;
+                                font-size: 16px;
+                                color: #002868;
+                            }
+                            @media print {
+                                body {
+                                    padding: 0;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="print-container">
+                            <img src="${printQrUrl}" alt="ISBAT Smart Gate QR Code">
+                            <p>Scan to check in / check out at ISBAT University</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                printWindow.document.write(htmlContent);
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            });
+        })();
+    </script>
+</body>
+</html>
