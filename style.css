@@ -7,7 +7,7 @@
 
 body {
     min-height: 100vh;
-    background: #0a2b4e;
+    background: #e0f2fe;
 }
 
 /* ========== BACKGROUND SLIDESHOW ========== */
@@ -41,7 +41,7 @@ body {
     object-fit: cover;
 }
 
-/* Updated overlay – almost no color, no blur */
+/* Light overlay – keeps background clear */
 .bg-overlay,
 .bg-dark-overlay {
     position: absolute;
@@ -49,33 +49,69 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.1);  /* very light, almost no darkening */
-    backdrop-filter: none;            /* completely remove blur */
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: none;
     pointer-events: none;
 }
 
-/* Form card – semi-transparent white so background shows through */
-.form-card {
-    background: rgba(255, 255, 255, 0.85);  /* slightly translucent */
-    border-radius: 28px;
-    padding: 28px 24px;
-    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-    display: none;
-    backdrop-filter: none;
-}
-/* ========== VISITOR CONTAINER ========== */
+/* ========== VISITOR CONTAINER (responsive) ========== */
 .visitor-container {
     position: relative;
     z-index: 1;
-    max-width: 550px;
-    margin: 0 auto;
-    padding: 25px 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
 }
 
+/* The form card – shrinks/grows with screen size */
+.form-card {
+    width: 100%;
+    max-width: 500px;        /* maximum width on desktop */
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    border-radius: 28px;
+    padding: 28px 24px;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+/* On very small phones, make card narrower and reduce padding */
+@media (max-width: 550px) {
+    .visitor-container {
+        padding: 15px;
+    }
+    .form-card {
+        max-width: 95%;       /* takes 95% of screen width */
+        padding: 20px 18px;
+        border-radius: 24px;
+    }
+}
+
+/* On extremely narrow devices (e.g., iPhone SE) */
+@media (max-width: 380px) {
+    .form-card {
+        padding: 16px 14px;
+    }
+    .form-card h2 {
+        font-size: 1.1rem;
+    }
+    .btn-primary {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Rest of the styles remain the same */
 .header {
     text-align: center;
-    color: white;
+    color: #002868;
     margin-bottom: 25px;
+    width: 100%;
+    max-width: 500px;
 }
 
 .header h1 {
@@ -84,57 +120,18 @@ body {
     letter-spacing: -0.3px;
 }
 
+@media (max-width: 550px) {
+    .header h1 {
+        font-size: 1.3rem;
+    }
+    .header p {
+        font-size: 0.75rem;
+    }
+}
+
 .header p {
     font-size: 0.85rem;
     opacity: 0.85;
-}
-
-/* Mode Selector */
-.mode-selector {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
-}
-
-.mode-btn {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    padding: 12px;
-    border-radius: 50px;
-    font-weight: 600;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s;
-    font-size: 0.9rem;
-}
-
-.mode-btn.active {
-    background: #002868;
-    box-shadow: 0 4px 12px rgba(0, 40, 104, 0.3);
-}
-
-.mode-btn i {
-    margin-right: 8px;
-}
-
-/* Form Card – Slightly transparent to show background */
-.form-card {
-    background: rgba(255, 255, 255, 0.92);
-    border-radius: 28px;
-    padding: 28px 24px;
-    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-    display: none;
-}
-
-.form-card.active-panel {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .form-card h2 {
@@ -145,6 +142,13 @@ body {
     padding-left: 12px;
 }
 
+@media (max-width: 380px) {
+    .form-card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+}
+
 .form-group {
     margin-bottom: 18px;
 }
@@ -153,7 +157,7 @@ body {
     display: block;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #334155;
+    color: #1e293b;
     margin-bottom: 5px;
 }
 
@@ -166,11 +170,19 @@ body {
 .form-group select {
     width: 100%;
     padding: 12px 14px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(0, 0, 0, 0.15);
     border-radius: 18px;
     font-size: 0.85rem;
     transition: 0.2s;
-    background: white;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 380px) {
+    .form-group input,
+    .form-group select {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+    }
 }
 
 .form-group input:focus,
@@ -178,6 +190,7 @@ body {
     outline: none;
     border-color: #002868;
     box-shadow: 0 0 0 2px rgba(0, 40, 104, 0.1);
+    background: white;
 }
 
 .btn-primary {
@@ -198,27 +211,10 @@ body {
     transform: translateY(-1px);
 }
 
-.info-note {
-    background: #e0f2fe;
-    padding: 10px 15px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    margin-bottom: 20px;
-    color: #0369a1;
-}
-
-.scan-result {
-    margin-top: 15px;
-    padding: 10px;
-    border-radius: 16px;
-    text-align: center;
-    font-size: 0.8rem;
-}
-
 .success-card {
     text-align: center;
     padding: 20px;
-    background: #ecfdf5;
+    background: rgba(236, 253, 245, 0.95);
     border-radius: 24px;
 }
 
@@ -229,6 +225,10 @@ body {
     text-align: center;
     font-size: 0.8rem;
     display: none;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(2px);
+    width: 100%;
+    max-width: 500px;
 }
 
 .message-area.success {
@@ -241,14 +241,4 @@ body {
     background: #fee2e2;
     color: #991b1b;
     display: block;
-}
-
-/* Responsive */
-@media (max-width: 550px) {
-    .visitor-container {
-        padding: 15px;
-    }
-    .form-card {
-        padding: 20px;
-    }
 }
