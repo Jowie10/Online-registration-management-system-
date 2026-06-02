@@ -29,8 +29,8 @@ if (dashboardBg) {
     img.src = '11.png';
 }
 
-const currentUrl = window.location.origin;
-const visitorFormUrl = `${currentUrl}/index.html`;
+const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+const visitorFormUrl = window.location.origin + basePath + 'index.html';
 
 let allVisitors = [];
 let reportsHistory = [];
