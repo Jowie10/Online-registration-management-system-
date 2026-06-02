@@ -106,7 +106,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase configuration (replace with your own if needed)
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDJwJrrhF6LKboNZpwH7-07IHSApN5vKXg",
             authDomain: "qr-code-sign-in-91fce.firebaseapp.com",
@@ -120,6 +120,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const visitorsCollection = collection(db, "visitors");
+
+        // ========== TIME LIMIT CONFIGURATION ==========
+        const MAX_VISIT_DURATION_HOURS = 2;   // Change as needed
 
         // DOM elements
         const phoneInput = document.getElementById('phoneInput');
@@ -237,7 +240,6 @@
                         exitTime: null,
                         status: "checked-in"
                     });
-                    // Show persistent confirmation
                     showPersistentConfirmation({ name, phone, nin, purpose }, true);
                 } catch (err) {
                     console.error(err);
@@ -247,7 +249,7 @@
             document.getElementById('backBtn').addEventListener('click', () => location.reload());
         }
 
-        // Main flow: check phone status
+        // Main flow: check phone status with auto‑expiry
         checkBtn.addEventListener('click', async () => {
             const phone = phoneInput.value.trim();
             if (!phone) {
@@ -263,23 +265,46 @@
             checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Checking...';
 
             try {
+                // Look for active (checked‑in) entries for this phone number
                 const activeQuery = query(visitorsCollection, where("phone", "==", phone), where("status", "==", "checked-in"));
                 const activeSnap = await getDocs(activeQuery);
 
+                let activeEntry = null;
                 if (!activeSnap.empty) {
-                    // CHECK OUT
-                    const docRef = activeSnap.docs[0];
-                    const visitor = docRef.data();
-                    await updateDoc(docRef.ref, {
-                        exitTime: Timestamp.now(),
-                        status: "checked-out"
-                    });
-                    showPersistentConfirmation({ name: visitor.name, phone: visitor.phone }, false);
-                    phoneInput.value = '';
-                } else {
-                    // Not checked in → show check-in form
-                    showCheckInForm(phone);
+                    activeEntry = activeSnap.docs[0];
+                    const visitor = activeEntry.data();
+                    const entryTime = visitor.entryTime.toDate(); // Firestore Timestamp → JS Date
+                    const now = new Date();
+                    const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
+
+                    if (hoursDiff >= MAX_VISIT_DURATION_HOURS) {
+                        // ----- Auto‑checkout expired visitor -----
+                        await updateDoc(activeEntry.ref, {
+                            exitTime: Timestamp.now(),
+                            status: "checked-out"
+                        });
+                        // Silently expire – no confirmation overlay, just treat as if no active visitor
+                        activeEntry = null; // important: now we consider no active entry
+                        // Optional: show a small message that the previous visit expired
+                        showMessage(`Previous visit exceeded ${MAX_VISIT_DURATION_HOURS} hours and has been closed. You can now check in again.`, false);
+                    } else {
+                        // ----- Normal check‑out (within allowed time) -----
+                        await updateDoc(activeEntry.ref, {
+                            exitTime: Timestamp.now(),
+                            status: "checked-out"
+                        });
+                        showPersistentConfirmation({ name: visitor.name, phone: visitor.phone }, false);
+                        phoneInput.value = '';
+                        return; // stop here – no check‑in form
+                    }
                 }
+
+                // If we reach here, either:
+                // - No active entry was found, OR
+                // - An expired entry was auto‑checked‑out (activeEntry set to null)
+                // So we show the check‑in form for a fresh entry.
+                showCheckInForm(phone);
+
             } catch (err) {
                 console.error(err);
                 showMessage('Error connecting to server. Please try again.', true);
@@ -289,7 +314,7 @@
             }
         });
 
-        // ========== BACKGROUND SLIDESHOW (identical to your style.css logic) ==========
+        // ========== BACKGROUND SLIDESHOW ==========
         const possibleImages = [
             "1.jpg", "1.jpeg", "2.jpg", "2.jpeg", "3.jpg", "3.jpeg",
             "4.jpg", "4.jpeg", "5.jpg", "5.jpeg", "6.jpg", "6.jpeg",
