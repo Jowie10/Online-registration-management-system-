@@ -1,36 +1,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Firebase Configuration - REPLACE WITH YOUR OWN FIREBASE PROJECT CREDENTIALS
 const firebaseConfig = {
   apiKey: "AIzaSyDJwJrrhF6LKboNZpwH7-07IHSApN5vKXg",
   authDomain: "qr-code-sign-in-91fce.firebaseapp.com",
   projectId: "qr-code-sign-in-91fce",
   storageBucket: "qr-code-sign-in-91fce.firebasestorage.app",
   messagingSenderId: "480973024477",
-  appId: "1:480973024477:web:13686e41a0856a79af7f34",
-  measurementId: "G-6K6WTZSTB9"
+  appId: "1:480973024477:web:13686e41a0856a79af7f34"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const visitorsCollection = collection(db, "visitors");
 
-// Check if 11.png loaded, if not show fallback
-const dashboardBg = document.querySelector('.dashboard-bg');
-if (dashboardBg) {
-    const img = new Image();
-    img.onload = () => {
-        dashboardBg.classList.remove('image-load-error');
-    };
-    img.onerror = () => {
-        dashboardBg.classList.add('image-load-error');
-    };
-    img.src = '11.png';
-}
-
-const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
-const visitorFormUrl = window.location.origin + basePath + 'index.html';
+// Smart QR points to the visitor page (index.html in the same folder)
+const smartQrUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'index.html';
 
 let allVisitors = [];
 let reportsHistory = [];
@@ -54,12 +39,13 @@ const staticQRDiv = document.getElementById('staticQRCode');
 const downloadQRBtn = document.getElementById('downloadQRBtn');
 const sendEmailBtn = document.getElementById('sendEmailBtn');
 
-function generateEntranceQR() {
+// Generate the smart QR code (same as generate-qr.html would produce)
+function generateSmartQR() {
     if (!staticQRDiv) return;
     staticQRDiv.innerHTML = '';
     const img = document.createElement('img');
-    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(visitorFormUrl)}`;
-    img.alt = "Entrance QR Code";
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(smartQrUrl)}`;
+    img.alt = "Smart Gate QR Code";
     img.style.width = "200px";
     img.style.margin = "auto";
     img.style.display = "block";
@@ -68,40 +54,30 @@ function generateEntranceQR() {
 
 if (viewQRBtn) {
     viewQRBtn.addEventListener('click', () => {
-        generateEntranceQR();
+        generateSmartQR();
         if (qrModal) qrModal.style.display = 'flex';
     });
 }
-
-document.querySelector('.close-qr')?.addEventListener('click', () => {
-    if (qrModal) qrModal.style.display = 'none';
-});
-
+document.querySelector('.close-qr')?.addEventListener('click', () => { if (qrModal) qrModal.style.display = 'none'; });
 if (downloadQRBtn) {
     downloadQRBtn.addEventListener('click', () => {
         const link = document.createElement('a');
-        link.download = 'entrance_qr_code.png';
-        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(visitorFormUrl)}`;
+        link.download = 'smart_gate_qr.png';
+        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(smartQrUrl)}`;
         link.click();
     });
 }
 
+// Report history functions (unchanged, but ensure reports include NIN)
 function loadReportsHistory() {
     const saved = localStorage.getItem('visitor_reports');
     if (saved) reportsHistory = JSON.parse(saved);
     renderReportsList();
 }
-
-function saveReportsHistory() {
-    localStorage.setItem('visitor_reports', JSON.stringify(reportsHistory));
-}
-
+function saveReportsHistory() { localStorage.setItem('visitor_reports', JSON.stringify(reportsHistory)); }
 function renderReportsList() {
     if (!reportsListDiv) return;
-    if (!reportsHistory.length) {
-        reportsListDiv.innerHTML = '<p style="color: #6b7280;">No reports generated yet.</p>';
-        return;
-    }
+    if (!reportsHistory.length) { reportsListDiv.innerHTML = '<p style="color: #6b7280;">No reports generated yet.</p>'; return; }
     reportsListDiv.innerHTML = reportsHistory.map((report, idx) => `
         <div class="report-item">
             <span><i class="fas fa-file-${report.type === 'pdf' ? 'pdf' : 'csv'}"></i> ${report.name}</span>
@@ -112,39 +88,18 @@ function renderReportsList() {
         </div>
     `).join('');
 }
-
-window.downloadReport = (idx) => {
-    const report = reportsHistory[idx];
-    const link = document.createElement('a');
-    link.href = report.dataUrl;
-    link.download = report.name;
-    link.click();
-};
-
-window.deleteReport = (idx) => {
-    reportsHistory.splice(idx, 1);
-    saveReportsHistory();
-    renderReportsList();
-};
-
+window.downloadReport = (idx) => { const r = reportsHistory[idx]; const a = document.createElement('a'); a.href = r.dataUrl; a.download = r.name; a.click(); };
+window.deleteReport = (idx) => { reportsHistory.splice(idx,1); saveReportsHistory(); renderReportsList(); };
 window.viewDetails = (id) => {
-    const visitor = allVisitors.find(v => v.id === id);
-    if (visitor) {
-        alert(`Visitor Details:\n\nName: ${visitor.name}\nPhone: ${visitor.phone}\nID: ${visitor.visitorId}\nPurpose: ${visitor.purpose}\nVisiting: ${visitor.visitingPerson || 'N/A'}\nEntry: ${visitor.entryTime?.toDate?.().toLocaleString()}\nExit: ${visitor.exitTime ? visitor.exitTime.toDate?.().toLocaleString() : 'Not checked out'}\nStatus: ${visitor.status === 'checked-in' ? 'Inside' : 'Left'}`);
-    }
+    const v = allVisitors.find(v => v.id === id);
+    if(v) alert(`Visitor Details:\n\nName: ${v.name}\nPhone: ${v.phone}\nNIN: ${v.nin || '—'}\nID: ${v.visitorId}\nPurpose: ${v.purpose}\nVisiting: ${v.visitingPerson || 'N/A'}\nEntry: ${v.entryTime?.toDate?.().toLocaleString()}\nExit: ${v.exitTime ? v.exitTime.toDate?.().toLocaleString() : 'Not checked out'}\nStatus: ${v.status === 'checked-in' ? 'Inside' : 'Left'}`);
 };
 
 function startRealtimeListener() {
     onSnapshot(visitorsCollection, (snapshot) => {
         allVisitors = [];
-        snapshot.forEach(doc => {
-            allVisitors.push({ id: doc.id, ...doc.data() });
-        });
-        allVisitors.sort((a, b) => {
-            const timeA = a.entryTime?.toDate?.() || new Date(a.entryTime);
-            const timeB = b.entryTime?.toDate?.() || new Date(b.entryTime);
-            return timeB - timeA;
-        });
+        snapshot.forEach(doc => allVisitors.push({ id: doc.id, ...doc.data() }));
+        allVisitors.sort((a,b) => (b.entryTime?.toDate?.() || new Date(b.entryTime)) - (a.entryTime?.toDate?.() || new Date(a.entryTime)));
         applyFiltersAndRender();
         updateStats();
     });
@@ -152,54 +107,39 @@ function startRealtimeListener() {
 
 function updateStats() {
     const today = new Date().toDateString();
-    const currentlyInside = allVisitors.filter(v => v.status === "checked-in").length;
-    const leftTodayCountVal = allVisitors.filter(v => {
-        if (!v.exitTime) return false;
-        const exitDate = v.exitTime.toDate ? v.exitTime.toDate() : new Date(v.exitTime);
-        return v.status === "checked-out" && exitDate.toDateString() === today;
-    }).length;
-    const totalDaily = allVisitors.filter(v => {
-        const entryDate = v.entryTime.toDate ? v.entryTime.toDate() : new Date(v.entryTime);
-        return entryDate.toDateString() === today;
-    }).length;
-    if (currentlyInsideCount) currentlyInsideCount.textContent = currentlyInside;
-    if (leftTodayCount) leftTodayCount.textContent = leftTodayCountVal;
-    if (totalDailyCount) totalDailyCount.textContent = totalDaily;
+    const inside = allVisitors.filter(v => v.status === "checked-in").length;
+    const leftToday = allVisitors.filter(v => v.exitTime && v.status === "checked-out" && (v.exitTime.toDate ? v.exitTime.toDate() : new Date(v.exitTime)).toDateString() === today).length;
+    const daily = allVisitors.filter(v => (v.entryTime.toDate ? v.entryTime.toDate() : new Date(v.entryTime)).toDateString() === today).length;
+    if(currentlyInsideCount) currentlyInsideCount.textContent = inside;
+    if(leftTodayCount) leftTodayCount.textContent = leftToday;
+    if(totalDailyCount) totalDailyCount.textContent = daily;
 }
 
 function applyFiltersAndRender() {
     let filtered = [...allVisitors];
-    const searchTerm = searchInput?.value.toLowerCase() || '';
-    if (searchTerm) {
-        filtered = filtered.filter(v =>
-            v.name?.toLowerCase().includes(searchTerm) ||
-            v.phone?.includes(searchTerm) ||
-            v.visitorId?.toLowerCase().includes(searchTerm)
-        );
-    }
+    const term = searchInput?.value.toLowerCase() || '';
+    if(term) filtered = filtered.filter(v => v.name?.toLowerCase().includes(term) || v.phone?.includes(term) || v.visitorId?.toLowerCase().includes(term));
     const status = statusFilter?.value || 'all';
-    if (status !== 'all') filtered = filtered.filter(v => v.status === status);
-    if (dateFilter?.value) {
-        const filterDate = new Date(dateFilter.value).toDateString();
-        filtered = filtered.filter(v => {
-            const entryDate = v.entryTime.toDate ? v.entryTime.toDate() : new Date(v.entryTime);
-            return entryDate.toDateString() === filterDate;
-        });
+    if(status !== 'all') filtered = filtered.filter(v => v.status === status);
+    if(dateFilter?.value) {
+        const fd = new Date(dateFilter.value).toDateString();
+        filtered = filtered.filter(v => (v.entryTime.toDate ? v.entryTime.toDate() : new Date(v.entryTime)).toDateString() === fd);
     }
     renderTable(filtered);
 }
 
 function renderTable(visitors) {
     if (!tableBody) return;
-    if (!visitors.length) {
-        tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No visitors found</td</tr>';
-        return;
-    }
-    tableBody.innerHTML = visitors.map(visitor => `
-        <tr>
-            <td>${visitor.visitorId || visitor.id}</td>
+    if (!visitors.length) { tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No visitors found</td></tr>'; return; }
+    tableBody.innerHTML = visitors.map(visitor => {
+        const isCheckedOut = visitor.status === 'checked-out';
+        const rowClass = isCheckedOut ? 'class="checked-out-row"' : '';
+        return `
+        <tr ${rowClass}>
+            <td>${escapeHtml(visitor.visitorId || visitor.id)}</td>
             <td>${escapeHtml(visitor.name)}</td>
             <td>${visitor.phone}</td>
+            <td>${escapeHtml(visitor.nin) || '—'}</td>
             <td>${visitor.purpose || '—'}</td>
             <td>${escapeHtml(visitor.visitingPerson) || '—'}</td>
             <td>${visitor.entryTime?.toDate ? visitor.entryTime.toDate().toLocaleString() : new Date(visitor.entryTime).toLocaleString()}</td>
@@ -207,136 +147,77 @@ function renderTable(visitors) {
             <td><span class="status-badge status-${visitor.status === 'checked-in' ? 'checked-in' : 'checked-out'}">${visitor.status === 'checked-in' ? 'Inside' : 'Left'}</span></td>
             <td><i class="fas fa-eye action-icon" onclick="window.viewDetails('${visitor.id}')" style="cursor:pointer;"></i></td>
         </tr>
-    `).join('');
+    `}).join('');
 }
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
 function exportToCSV() {
-    const headers = ['VisitorID', 'Name', 'Phone', 'Purpose', 'Visiting', 'EntryTime', 'ExitTime', 'Status'];
+    const headers = ['VisitorID','Name','Phone','NIN','Purpose','Visiting','EntryTime','ExitTime','Status'];
     const rows = allVisitors.map(v => [
-        v.visitorId, v.name, v.phone, v.purpose || '', v.visitingPerson || '',
+        v.visitorId, v.name, v.phone, v.nin || '', v.purpose || '', v.visitingPerson || '',
         v.entryTime?.toDate ? v.entryTime.toDate().toLocaleString() : new Date(v.entryTime).toLocaleString(),
         v.exitTime ? (v.exitTime.toDate ? v.exitTime.toDate().toLocaleString() : new Date(v.exitTime).toLocaleString()) : '',
         v.status === 'checked-in' ? 'Inside' : 'Left'
     ]);
-    const csvContent = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
-    const filename = `visitor_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-    saveReport(filename, url, 'csv');
+    saveReport(`visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`, url, 'csv');
 }
-
 function exportToPDF() {
-    if (typeof jspdf === 'undefined') {
-        alert("jsPDF library not loaded.");
-        return;
-    }
+    if(typeof jspdf === 'undefined') { alert("jsPDF not loaded."); return; }
     const { jsPDF } = jspdf;
     const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Visitor Management Report", 20, 20);
-    doc.setFontSize(10);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28);
-    doc.text(`Total Visitors: ${allVisitors.length}`, 20, 35);
-    doc.text(`Currently Inside: ${allVisitors.filter(v => v.status === 'checked-in').length}`, 20, 41);
-    let y = 50;
-    doc.setFontSize(9);
-    allVisitors.forEach((v, idx) => {
-        if (y > 270) { doc.addPage(); y = 20; }
-        doc.text(`${idx + 1}. ${v.name} (${v.visitorId}) - ${v.status === 'checked-in' ? 'Inside' : 'Left'}`, 20, y);
-        y += 6;
+    doc.setFontSize(18); doc.text("Visitor Management Report",20,20);
+    doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`,20,28);
+    doc.text(`Total Visitors: ${allVisitors.length}`,20,35);
+    doc.text(`Currently Inside: ${allVisitors.filter(v=>v.status==='checked-in').length}`,20,41);
+    let y=50; doc.setFontSize(9);
+    allVisitors.forEach((v,i)=>{
+        if(y>270){ doc.addPage(); y=20; }
+        doc.text(`${i+1}. ${v.name} (${v.visitorId}) - ${v.status==='checked-in'?'Inside':'Left'}`,20,y);
+        y+=6;
     });
     const pdfBlob = doc.output('blob');
     const url = URL.createObjectURL(pdfBlob);
-    const filename = `visitor_report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
-    saveReport(filename, url, 'pdf');
+    saveReport(`visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.pdf`, url, 'pdf');
 }
-
 function saveReport(name, dataUrl, type) {
-    reportsHistory.unshift({ name, dataUrl, type, date: new Date().toISOString() });
-    if (reportsHistory.length > 20) reportsHistory.pop();
-    saveReportsHistory();
-    renderReportsList();
+    reportsHistory.unshift({name, dataUrl, type, date: new Date().toISOString()});
+    if(reportsHistory.length>20) reportsHistory.pop();
+    saveReportsHistory(); renderReportsList();
 }
-
-function emailReport() {
-    if (emailModal) emailModal.style.display = 'flex';
-}
-
-document.querySelector('.close-email')?.addEventListener('click', () => {
-    if (emailModal) emailModal.style.display = 'none';
-});
-
-if (sendEmailBtn) {
-    sendEmailBtn.addEventListener('click', () => {
+function emailReport() { if(emailModal) emailModal.style.display = 'flex'; }
+document.querySelector('.close-email')?.addEventListener('click',()=>{ if(emailModal) emailModal.style.display='none'; });
+if(sendEmailBtn){
+    sendEmailBtn.addEventListener('click',()=>{
         const email = document.getElementById('emailRecipient')?.value;
-        if (!email) {
-            alert("Please enter recipient email");
-            return;
-        }
-        const subject = encodeURIComponent('Visitor Management Report');
-        const body = encodeURIComponent(`Visitor Report\nGenerated: ${new Date().toLocaleString()}\nTotal Visitors: ${allVisitors.length}\nCurrently Inside: ${allVisitors.filter(v => v.status === 'checked-in').length}`);
-        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        if(!email){ alert("Enter recipient email"); return; }
+        const subj = encodeURIComponent('Visitor Management Report');
+        const body = encodeURIComponent(`Visitor Report\nGenerated: ${new Date().toLocaleString()}\nTotal Visitors: ${allVisitors.length}\nCurrently Inside: ${allVisitors.filter(v=>v.status==='checked-in').length}`);
+        window.location.href = `mailto:${email}?subject=${subj}&body=${body}`;
         alert(`Email client opened for ${email}`);
-        if (emailModal) emailModal.style.display = 'none';
+        if(emailModal) emailModal.style.display='none';
     });
 }
-
-window.addEventListener('click', (e) => {
-    if (e.target === emailModal && emailModal) emailModal.style.display = 'none';
-    if (e.target === qrModal && qrModal) qrModal.style.display = 'none';
-});
-
-if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportToPDF);
-if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCSV);
-if (emailReportBtn) emailReportBtn.addEventListener('click', emailReport);
-if (refreshBtn) refreshBtn.addEventListener('click', () => applyFiltersAndRender());
-if (searchInput) searchInput.addEventListener('input', applyFiltersAndRender);
-if (statusFilter) statusFilter.addEventListener('change', applyFiltersAndRender);
-if (dateFilter) dateFilter.addEventListener('change', applyFiltersAndRender);
+window.addEventListener('click',(e)=>{ if(e.target===emailModal && emailModal) emailModal.style.display='none'; if(e.target===qrModal && qrModal) qrModal.style.display='none'; });
+if(exportPdfBtn) exportPdfBtn.addEventListener('click',exportToPDF);
+if(exportCsvBtn) exportCsvBtn.addEventListener('click',exportToCSV);
+if(emailReportBtn) emailReportBtn.addEventListener('click',emailReport);
+if(refreshBtn) refreshBtn.addEventListener('click',()=>applyFiltersAndRender());
+if(searchInput) searchInput.addEventListener('input',applyFiltersAndRender);
+if(statusFilter) statusFilter.addEventListener('change',applyFiltersAndRender);
+if(dateFilter) dateFilter.addEventListener('change',applyFiltersAndRender);
 
 loadReportsHistory();
 startRealtimeListener();
 
-// ============================================
-// AUTO-UPDATING TIME & DATE
-// ============================================
-
 function updateDateTime() {
     const now = new Date();
-    
-    // Format date: 28/05/2026
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    const dateString = `${day}/${month}/${year}`;
-    
-    // Format time: 22:08:26
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timeString = `${hours}:${minutes}:${seconds}`;
-    
-    // Update footer
     const footerDate = document.getElementById('footerDate');
     const footerTime = document.getElementById('footerTime');
-    if (footerDate) footerDate.textContent = dateString;
-    if (footerTime) footerTime.textContent = timeString;
-    
-    // Update header time if exists
-    const headerTime = document.getElementById('headerTime');
-    if (headerTime) headerTime.textContent = timeString;
+    if(footerDate) footerDate.textContent = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    if(footerTime) footerTime.textContent = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 }
-
-// Update every second
-setInterval(updateDateTime, 1000);
+setInterval(updateDateTime,1000);
 updateDateTime();
