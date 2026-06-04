@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Visitor Gate | ISBAT University</title>
+    <title>Smart Gate | ISBAT University</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Additional styles for the confirmation overlay */
+        /* Confirmation overlay styles */
         .confirmation-overlay {
             position: fixed;
             top: 0;
@@ -77,7 +75,6 @@
     </style>
 </head>
 <body>
-    <!-- Background slideshow (shared with style.css) -->
     <div class="bg-slideshow">
         <div class="bg-slideshow-track" id="bgSlideshowTrack"></div>
         <div class="bg-overlay"></div>
@@ -86,7 +83,7 @@
     <div class="visitor-container">
         <div class="header">
             <h1><i class="fas fa-building"></i> ISBAT University</h1>
-            <p>Electronic Gate Register</p>
+            <p>Smart Gate – Check In / Out</p>
         </div>
 
         <div class="form-card" id="mainCard">
@@ -106,25 +103,19 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs, addDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDJwJrrhF6LKboNZpwH7-07IHSApN5vKXg",
             authDomain: "qr-code-sign-in-91fce.firebaseapp.com",
             projectId: "qr-code-sign-in-91fce",
             storageBucket: "qr-code-sign-in-91fce.firebasestorage.app",
             messagingSenderId: "480973024477",
-            appId: "1:480973024477:web:13686e41a0856a79af7f34",
-            measurementId: "G-6K6WTZSTB9"
+            appId: "1:480973024477:web:13686e41a0856a79af7f34"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const visitorsCollection = collection(db, "visitors");
 
-        // ========== TIME LIMIT CONFIGURATION ==========
-        const MAX_VISIT_DURATION_HOURS = 2;   // Change as needed
-
-        // DOM elements
         const phoneInput = document.getElementById('phoneInput');
         const checkBtn = document.getElementById('checkStatusBtn');
         const mainCard = document.getElementById('mainCard');
@@ -135,11 +126,11 @@
             setTimeout(() => { messageDiv.innerHTML = ''; }, 6000);
         }
 
-        // Persistent confirmation overlay (2 min or tap to dismiss)
+        // Persistent confirmation overlay (2 min or tap)
         function showPersistentConfirmation(visitorData, isCheckin = true) {
             const overlay = document.createElement('div');
             overlay.className = 'confirmation-overlay';
-            const name = visitorData.name || visitorData.fullName;
+            const name = visitorData.name;
             const time = new Date().toLocaleTimeString();
             const date = new Date().toLocaleDateString();
             overlay.innerHTML = `
@@ -157,24 +148,17 @@
                 </div>
             `;
             document.body.appendChild(overlay);
-
             const dismiss = () => {
                 overlay.remove();
-                location.reload(); // reset to phone entry screen
+                location.reload(); // reset to phone entry
             };
             overlay.addEventListener('click', dismiss);
-            // Auto-dismiss after 2 minutes
-            setTimeout(dismiss, 120000);
+            setTimeout(dismiss, 120000); // 2 minutes auto-dismiss
         }
 
         function escapeHtml(str) {
             if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
+            return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
         }
 
         // Show check-in form (with NIN)
@@ -205,19 +189,14 @@
                     <label><i class="fas fa-user-tag"></i> Visiting Person/Dept (optional)</label>
                     <input type="text" id="visitingPerson" placeholder="Who are you visiting?">
                 </div>
-                <button id="confirmCheckInBtn" class="btn-primary">
-                    <i class="fas fa-check-circle"></i> Complete Check In
-                </button>
-                <button id="backBtn" class="btn-primary" style="background:#6c757d; margin-top:10px;">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
+                <button id="confirmCheckInBtn" class="btn-primary">Complete Check In</button>
+                <button id="backBtn" class="btn-primary" style="background:#6c757d; margin-top:10px;">Back</button>
             `;
             document.getElementById('confirmCheckInBtn').addEventListener('click', async () => {
                 const name = document.getElementById('fullName').value.trim();
                 const nin = document.getElementById('nin').value.trim();
                 const purpose = document.getElementById('purpose').value;
                 const visitingPerson = document.getElementById('visitingPerson').value.trim();
-
                 if (!name || !nin) {
                     showMessage('Full Name and NIN are required', true);
                     return;
@@ -226,19 +205,11 @@
                     showMessage('Please enter a valid NIN (at least 10 characters)', true);
                     return;
                 }
-
                 try {
                     const visitorId = `VIS_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
                     await addDoc(visitorsCollection, {
-                        visitorId,
-                        name,
-                        phone,
-                        nin,
-                        purpose,
-                        visitingPerson,
-                        entryTime: Timestamp.now(),
-                        exitTime: null,
-                        status: "checked-in"
+                        visitorId, name, phone, nin, purpose, visitingPerson,
+                        entryTime: Timestamp.now(), exitTime: null, status: "checked-in"
                     });
                     showPersistentConfirmation({ name, phone, nin, purpose }, true);
                 } catch (err) {
@@ -249,7 +220,7 @@
             document.getElementById('backBtn').addEventListener('click', () => location.reload());
         }
 
-        // Main flow: check phone status with auto‑expiry
+        // Main flow: check phone status
         checkBtn.addEventListener('click', async () => {
             const phone = phoneInput.value.trim();
             if (!phone) {
@@ -260,51 +231,22 @@
                 showMessage('Please enter a valid phone number (minimum 8 digits)', true);
                 return;
             }
-
             checkBtn.disabled = true;
             checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Checking...';
-
             try {
-                // Look for active (checked‑in) entries for this phone number
                 const activeQuery = query(visitorsCollection, where("phone", "==", phone), where("status", "==", "checked-in"));
                 const activeSnap = await getDocs(activeQuery);
-
-                let activeEntry = null;
                 if (!activeSnap.empty) {
-                    activeEntry = activeSnap.docs[0];
-                    const visitor = activeEntry.data();
-                    const entryTime = visitor.entryTime.toDate(); // Firestore Timestamp → JS Date
-                    const now = new Date();
-                    const hoursDiff = (now - entryTime) / (1000 * 60 * 60);
-
-                    if (hoursDiff >= MAX_VISIT_DURATION_HOURS) {
-                        // ----- Auto‑checkout expired visitor -----
-                        await updateDoc(activeEntry.ref, {
-                            exitTime: Timestamp.now(),
-                            status: "checked-out"
-                        });
-                        // Silently expire – no confirmation overlay, just treat as if no active visitor
-                        activeEntry = null; // important: now we consider no active entry
-                        // Optional: show a small message that the previous visit expired
-                        showMessage(`Previous visit exceeded ${MAX_VISIT_DURATION_HOURS} hours and has been closed. You can now check in again.`, false);
-                    } else {
-                        // ----- Normal check‑out (within allowed time) -----
-                        await updateDoc(activeEntry.ref, {
-                            exitTime: Timestamp.now(),
-                            status: "checked-out"
-                        });
-                        showPersistentConfirmation({ name: visitor.name, phone: visitor.phone }, false);
-                        phoneInput.value = '';
-                        return; // stop here – no check‑in form
-                    }
+                    // CHECK OUT
+                    const docRef = activeSnap.docs[0];
+                    const visitor = docRef.data();
+                    await updateDoc(docRef.ref, { exitTime: Timestamp.now(), status: "checked-out" });
+                    showPersistentConfirmation({ name: visitor.name, phone: visitor.phone }, false);
+                    phoneInput.value = '';
+                } else {
+                    // CHECK IN
+                    showCheckInForm(phone);
                 }
-
-                // If we reach here, either:
-                // - No active entry was found, OR
-                // - An expired entry was auto‑checked‑out (activeEntry set to null)
-                // So we show the check‑in form for a fresh entry.
-                showCheckInForm(phone);
-
             } catch (err) {
                 console.error(err);
                 showMessage('Error connecting to server. Please try again.', true);
@@ -314,61 +256,21 @@
             }
         });
 
-        // ========== BACKGROUND SLIDESHOW ==========
-        const possibleImages = [
-            "1.jpg", "1.jpeg", "2.jpg", "2.jpeg", "3.jpg", "3.jpeg",
-            "4.jpg", "4.jpeg", "5.jpg", "5.jpeg", "6.jpg", "6.jpeg",
-            "7.jpg", "7.jpeg", "8.jpg", "8.jpeg", "9.jpg", "9.jpeg",
-            "10.jpg", "10.jpeg", "11.jpg", "11.jpeg", "12.jpg", "12.jpeg",
-            "13.jpg", "13.jpeg", "14.jpg", "14.jpeg"
-        ];
-        let validImages = [];
-        let currentBgSlide = 0;
-        let bgSlideInterval = null;
+        // Background slideshow (same as your style.css)
+        const possibleImages = ["1.jpg","1.jpeg","2.jpg","2.jpeg","3.jpg","3.jpeg","4.jpg","4.jpeg","5.jpg","5.jpeg","6.jpg","6.jpeg","7.jpg","7.jpeg","8.jpg","8.jpeg","9.jpg","9.jpeg","10.jpg","10.jpeg","11.jpg","11.jpeg","12.jpg","12.jpeg","13.jpg","13.jpeg","14.jpg","14.jpeg"];
+        let validImages = [], currentBgSlide = 0, bgSlideInterval = null;
         const track = document.getElementById('bgSlideshowTrack');
-
-        function imageExists(url) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url;
-            });
-        }
         async function findExistingImages() {
-            const results = await Promise.all(possibleImages.map(async (img) => {
-                const exists = await imageExists(img);
-                return { url: img, exists };
-            }));
+            const results = await Promise.all(possibleImages.map(async img => ({ url: img, exists: await new Promise(resolve => { const i = new Image(); i.onload = () => resolve(true); i.onerror = () => resolve(false); i.src = img; }) })));
             validImages = results.filter(r => r.exists).map(r => r.url);
             if (validImages.length === 0) document.body.style.backgroundColor = '#e0f2fe';
             return validImages.length > 0;
         }
-        function buildBgSlideshow() {
-            if (!track || validImages.length === 0) return;
-            track.innerHTML = validImages.map((image, index) => `
-                <div class="bg-slide" data-index="${index}">
-                    <img src="${image}" class="bg-slide-image" loading="eager">
-                </div>
-            `).join('');
-        }
-        function goToBgSlide(index) {
-            if (validImages.length === 0) return;
-            if (index < 0) index = validImages.length - 1;
-            if (index >= validImages.length) index = 0;
-            currentBgSlide = index;
-            if (track) track.style.transform = `translateX(-${currentBgSlide * 100}%)`;
-        }
-        function nextBgSlide() { goToBgSlide(currentBgSlide + 1); }
-        function startBgAutoPlay() {
-            if (bgSlideInterval) clearInterval(bgSlideInterval);
-            if (validImages.length <= 1) return;
-            bgSlideInterval = setInterval(nextBgSlide, 5000);
-        }
-        async function initBgSlideshow() {
-            const hasImages = await findExistingImages();
-            if (hasImages) { buildBgSlideshow(); startBgAutoPlay(); }
-        }
+        function buildBgSlideshow() { if (!track || !validImages.length) return; track.innerHTML = validImages.map((img, i) => `<div class="bg-slide" data-index="${i}"><img src="${img}" class="bg-slide-image" loading="eager"></div>`).join(''); }
+        function goToBgSlide(i) { if (!validImages.length) return; if (i < 0) i = validImages.length-1; if (i >= validImages.length) i = 0; currentBgSlide = i; if(track) track.style.transform = `translateX(-${currentBgSlide*100}%)`; }
+        function nextBgSlide() { goToBgSlide(currentBgSlide+1); }
+        function startBgAutoPlay() { if (bgSlideInterval) clearInterval(bgSlideInterval); if (validImages.length <= 1) return; bgSlideInterval = setInterval(nextBgSlide, 5000); }
+        async function initBgSlideshow() { if (await findExistingImages()) { buildBgSlideshow(); startBgAutoPlay(); } }
         initBgSlideshow();
         window.addEventListener('beforeunload', () => { if (bgSlideInterval) clearInterval(bgSlideInterval); });
     </script>
