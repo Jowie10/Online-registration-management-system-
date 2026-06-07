@@ -146,7 +146,7 @@
             return `${minutes}m`;
         }
 
-        // CHECK-IN CONFIRMATION (exact wording)
+        // CHECK-IN CONFIRMATION
         function showCheckinConfirmation(name, purpose, entryTime, phone) {
             const overlay = document.createElement('div');
             overlay.className = 'confirmation-overlay';
@@ -174,7 +174,7 @@
             setTimeout(dismiss, 120000);
         }
 
-        // CHECK-OUT CONFIRMATION (exact wording)
+        // CHECK-OUT CONFIRMATION
         function showCheckoutConfirmation(name, purpose, entryTime, exitTime, phone) {
             const overlay = document.createElement('div');
             overlay.className = 'confirmation-overlay';
@@ -216,7 +216,7 @@
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-id-card"></i> NIN (National ID) *</label>
-                    <input type="text" id="nin" placeholder="e.g., CM1234567890AB" required>
+                    <input type="text" id="nin" placeholder="e.g., CM1234567890AB" required oninput="this.value = this.value.toUpperCase()">
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-briefcase"></i> Reason for Visiting *</label>
@@ -250,7 +250,7 @@
                 
                 try {
                     const name = document.getElementById('fullName').value.trim();
-                    const nin = document.getElementById('nin').value.trim();
+                    const nin = document.getElementById('nin').value.trim().toUpperCase(); // extra safety
                     const purpose = document.getElementById('purpose').value;
                     const visitingPerson = document.getElementById('visitingPerson').value.trim();
                     
