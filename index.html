@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Confirmation overlay styles */
         .confirmation-overlay {
             position: fixed;
             top: 0;
@@ -64,14 +63,8 @@
             color: #64748b;
             margin-top: 16px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -126,7 +119,10 @@
             setTimeout(() => { messageDiv.innerHTML = ''; }, 6000);
         }
 
-        // Persistent confirmation overlay (2 min or tap)
+        function normalizePhone(phone) {
+            return phone.replace(/[\s+\-()]/g, '');
+        }
+
         function showPersistentConfirmation(visitorData, isCheckin = true) {
             const overlay = document.createElement('div');
             overlay.className = 'confirmation-overlay';
@@ -148,12 +144,9 @@
                 </div>
             `;
             document.body.appendChild(overlay);
-            const dismiss = () => {
-                overlay.remove();
-                location.reload(); // reset to phone entry
-            };
+            const dismiss = () => { overlay.remove(); location.reload(); };
             overlay.addEventListener('click', dismiss);
-            setTimeout(dismiss, 120000); // 2 minutes auto-dismiss
+            setTimeout(dismiss, 120000);
         }
 
         function escapeHtml(str) {
@@ -161,7 +154,6 @@
             return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
         }
 
-        // Show check-in form (with NIN)
         function showCheckInForm(phone) {
             mainCard.innerHTML = `
                 <h2><i class="fas fa-sign-in-alt"></i> Check In</h2>
@@ -208,7 +200,7 @@
                 try {
                     const visitorId = `VIS_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
                     await addDoc(visitorsCollection, {
-                        visitorId, name, phone, nin, purpose, visitingPerson,
+                        visitorId, name, phone: normalizePhone(phone), nin, purpose, visitingPerson,
                         entryTime: Timestamp.now(), exitTime: null, status: "checked-in"
                     });
                     showPersistentConfirmation({ name, phone, nin, purpose }, true);
@@ -220,17 +212,17 @@
             document.getElementById('backBtn').addEventListener('click', () => location.reload());
         }
 
-        // Main flow: check phone status
         checkBtn.addEventListener('click', async () => {
-            const phone = phoneInput.value.trim();
-            if (!phone) {
+            const rawPhone = phoneInput.value.trim();
+            if (!rawPhone) {
                 showMessage('Please enter your phone number', true);
                 return;
             }
-            if (!/^[\d\s+()-]{8,}$/.test(phone)) {
+            if (!/^[\d\s+()-]{8,}$/.test(rawPhone)) {
                 showMessage('Please enter a valid phone number (minimum 8 digits)', true);
                 return;
             }
+            const phone = normalizePhone(rawPhone);
             checkBtn.disabled = true;
             checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Checking...';
             try {
@@ -241,7 +233,7 @@
                     const docRef = activeSnap.docs[0];
                     const visitor = docRef.data();
                     await updateDoc(docRef.ref, { exitTime: Timestamp.now(), status: "checked-out" });
-                    showPersistentConfirmation({ name: visitor.name, phone: visitor.phone }, false);
+                    showPersistentConfirmation({ name: visitor.name, phone }, false);
                     phoneInput.value = '';
                 } else {
                     // CHECK IN
@@ -256,7 +248,7 @@
             }
         });
 
-        // Background slideshow (same as your style.css)
+        // Background slideshow (identical to your style.css)
         const possibleImages = ["1.jpg","1.jpeg","2.jpg","2.jpeg","3.jpg","3.jpeg","4.jpg","4.jpeg","5.jpg","5.jpeg","6.jpg","6.jpeg","7.jpg","7.jpeg","8.jpg","8.jpeg","9.jpg","9.jpeg","10.jpg","10.jpeg","11.jpg","11.jpeg","12.jpg","12.jpeg","13.jpg","13.jpeg","14.jpg","14.jpeg"];
         let validImages = [], currentBgSlide = 0, bgSlideInterval = null;
         const track = document.getElementById('bgSlideshowTrack');
