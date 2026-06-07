@@ -12,11 +12,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-    <!-- Background -->
+    <!-- Background watermark -->
     <div class="dashboard-bg"></div>
 
     <div class="dashboard-container">
-        <!-- Hero Banner with Logo -->
+        <!-- Hero Banner -->
         <div class="hero-banner">
             <div class="hero-overlay"></div>
             <div class="hero-content">
@@ -92,7 +92,7 @@
             </div>
         </div>
 
-        <!-- Quick Info -->
+        <!-- Quick Info (dynamic stats) -->
         <div class="quick-info">
             <div class="info-chip"><i class="fas fa-building"></i> Most Visited: <strong id="mostVisitedDept">Administration</strong></div>
             <div class="info-chip"><i class="fas fa-chart-line"></i> Peak Hour: <strong id="peakHour">10:00 - 11:00</strong></div>
@@ -100,7 +100,7 @@
             <div class="info-chip"><i class="fas fa-temperature-high"></i> 21°C / Clear</div>
         </div>
 
-        <!-- Search Section -->
+        <!-- Search & Filter Section (with date range) -->
         <div class="search-section">
             <div class="search-box">
                 <i class="fas fa-search"></i>
@@ -124,6 +124,15 @@
                 </select>
                 <input type="date" id="dateFilter">
                 <button id="clearFiltersBtn" class="filter-clear"><i class="fas fa-times-circle"></i> Clear</button>
+            </div>
+            <!-- DATE RANGE PICKER & WEEKLY REPORT BUTTON -->
+            <div class="filter-group" style="flex: 2; margin-top: 10px;">
+                <label style="align-self:center; font-size:0.7rem;">From:</label>
+                <input type="date" id="startDateFilter">
+                <label style="align-self:center; font-size:0.7rem;">To:</label>
+                <input type="date" id="endDateFilter">
+                <button id="applyDateRangeBtn" class="filter-clear" style="background:#002868; color:white; border:none;">Apply Range</button>
+                <button id="weeklyReportBtn" class="action-btn-main" style="background:#CF2E2E; color:white;"><i class="fas fa-calendar-week"></i> Weekly Report</button>
             </div>
         </div>
 
@@ -192,9 +201,9 @@
                 </div>
                 <div class="footer-datetime">
                     <i class="fas fa-calendar-alt"></i>
-                    <span id="footerDate">28/05/2026</span>
+                    <span id="footerDate">--/--/----</span>
                     <i class="fas fa-clock"></i>
-                    <span id="footerTime">22:08:26</span>
+                    <span id="footerTime">--:--:--</span>
                 </div>
             </div>
         </div>
