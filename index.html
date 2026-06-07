@@ -26,7 +26,7 @@
         .confirmation-card {
             background: white;
             max-width: 90%;
-            width: 400px;
+            width: 420px;
             border-radius: 32px;
             padding: 32px 24px;
             text-align: center;
@@ -35,13 +35,18 @@
         }
         .confirmation-card i {
             font-size: 64px;
-            color: #10b981;
             margin-bottom: 20px;
         }
         .confirmation-card h3 {
             color: #002868;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             font-size: 1.5rem;
+        }
+        .confirmation-card .subtitle {
+            color: #CF2E2E;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 15px;
         }
         .confirmation-card .details {
             background: #f8fafc;
@@ -58,6 +63,10 @@
         .confirmation-card .details strong {
             color: #002868;
         }
+        .message-line {
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
         .tap-hint {
             font-size: 0.7rem;
             color: #64748b;
@@ -65,17 +74,9 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .btn-loading {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        .btn-loading i {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .btn-loading { opacity: 0.7; cursor: not-allowed; }
+        .btn-loading i { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -125,7 +126,6 @@
         const mainCard = document.getElementById('mainCard');
         const messageDiv = document.getElementById('messageArea');
         
-        // Flag to prevent multiple submissions
         let isProcessing = false;
 
         function showMessage(text, isError = false) {
@@ -137,23 +137,62 @@
             return phone.replace(/[\s+\-()]/g, '');
         }
 
-        function showPersistentConfirmation(visitorData, isCheckin = true) {
+        function formatDuration(startDate, endDate) {
+            const diffMs = endDate - startDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const hours = Math.floor(diffMins / 60);
+            const minutes = diffMins % 60;
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+
+        // CHECK-IN CONFIRMATION (exact wording)
+        function showCheckinConfirmation(name, purpose, entryTime, phone) {
             const overlay = document.createElement('div');
             overlay.className = 'confirmation-overlay';
-            const name = visitorData.name;
-            const time = new Date().toLocaleTimeString();
-            const date = new Date().toLocaleDateString();
+            const timeFormatted = entryTime.toLocaleTimeString();
+            const dateFormatted = entryTime.toLocaleDateString();
             overlay.innerHTML = `
                 <div class="confirmation-card">
-                    <i class="fas ${isCheckin ? 'fa-check-circle' : 'fa-sign-out-alt'}"></i>
-                    <h3>${isCheckin ? 'Check-in Successful!' : 'Goodbye!'}</h3>
+                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                    <h3>SIGN IN</h3>
+                    <div class="message-line">You are now signed in.</div>
+                    <div class="subtitle">WELCOME TO ISBAT UNIVERSITY</div>
                     <div class="details">
-                        <p><strong><i class="fas fa-user"></i> Name:</strong> ${escapeHtml(name)}</p>
-                        <p><strong><i class="fas fa-phone"></i> Phone:</strong> ${escapeHtml(visitorData.phone)}</p>
-                        ${visitorData.nin ? `<p><strong><i class="fas fa-id-card"></i> NIN:</strong> ${escapeHtml(visitorData.nin)}</p>` : ''}
-                        <p><strong><i class="fas fa-clock"></i> Time:</strong> ${date} at ${time}</p>
-                        ${isCheckin ? `<p><strong><i class="fas fa-briefcase"></i> Reason:</strong> ${escapeHtml(visitorData.purpose || '—')}</p>` : ''}
+                        <p><strong>Hello ${escapeHtml(name)}</strong></p>
+                        <p><strong>Purpose:</strong> ${escapeHtml(purpose)}</p>
+                        <p><strong>Time:</strong> ${dateFormatted} at ${timeFormatted}</p>
                     </div>
+                    <div class="message-line">Thank you for visiting our campus.</div>
+                    <div class="message-line">Have a productive stay!</div>
+                    <p class="tap-hint"><i class="fas fa-hand-pointer"></i> Tap anywhere to continue</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            const dismiss = () => { overlay.remove(); location.reload(); };
+            overlay.addEventListener('click', dismiss);
+            setTimeout(dismiss, 120000);
+        }
+
+        // CHECK-OUT CONFIRMATION (exact wording)
+        function showCheckoutConfirmation(name, purpose, entryTime, exitTime, phone) {
+            const overlay = document.createElement('div');
+            overlay.className = 'confirmation-overlay';
+            const entryFormatted = entryTime.toLocaleString();
+            const exitFormatted = exitTime.toLocaleString();
+            const duration = formatDuration(entryTime, exitTime);
+            overlay.innerHTML = `
+                <div class="confirmation-card">
+                    <i class="fas fa-sign-out-alt" style="color: #CF2E2E;"></i>
+                    <h3>SIGN OUT</h3>
+                    <div class="message-line">Farewell, ${escapeHtml(name)}</div>
+                    <div class="message-line">You are now signed out</div>
+                    <div class="details">
+                        <p><strong>You visited for:</strong> ${escapeHtml(purpose)}</p>
+                        <p><strong>In:</strong> ${entryFormatted} | <strong>Out:</strong> ${exitFormatted}</p>
+                        <p><strong>Duration:</strong> ${duration}</p>
+                    </div>
+                    <div class="message-line">We hope you achieved what you came for.</div>
                     <p class="tap-hint"><i class="fas fa-hand-pointer"></i> Tap anywhere to continue</p>
                 </div>
             `;
@@ -203,7 +242,6 @@
             
             const confirmBtn = document.getElementById('confirmCheckInBtn');
             confirmBtn.addEventListener('click', async () => {
-                // Prevent multiple clicks
                 if (isProcessing) return;
                 isProcessing = true;
                 confirmBtn.disabled = true;
@@ -226,7 +264,6 @@
                     }
                     
                     const normalizedPhone = normalizePhone(phone);
-                    // Double-check duplicate active check-in (server-side)
                     const activeQuery = query(visitorsCollection, where("phone", "==", normalizedPhone), where("status", "==", "checked-in"));
                     const activeSnap = await getDocs(activeQuery);
                     if (!activeSnap.empty) {
@@ -235,22 +272,19 @@
                     }
                     
                     const visitorId = `VIS_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+                    const entryTime = Timestamp.now();
                     await addDoc(visitorsCollection, {
                         visitorId, name, phone: normalizedPhone, nin, purpose, visitingPerson,
-                        entryTime: Timestamp.now(), exitTime: null, status: "checked-in"
+                        entryTime, exitTime: null, status: "checked-in"
                     });
-                    showPersistentConfirmation({ name, phone, nin, purpose }, true);
+                    showCheckinConfirmation(name, purpose, entryTime.toDate(), phone);
                 } catch (err) {
                     console.error(err);
                     showMessage('Check-in failed. Please try again.', true);
-                    // Re-enable button on error so user can retry
                     confirmBtn.disabled = false;
                     confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Check In';
                     confirmBtn.classList.remove('btn-loading');
                     isProcessing = false;
-                } finally {
-                    // If success, the page will reload from overlay, so no need to re-enable.
-                    // Only re-enable on error case (handled above)
                 }
             });
             
@@ -279,8 +313,11 @@
                     // CHECK OUT
                     const docRef = activeSnap.docs[0];
                     const visitor = docRef.data();
-                    await updateDoc(docRef.ref, { exitTime: Timestamp.now(), status: "checked-out" });
-                    showPersistentConfirmation({ name: visitor.name, phone }, false);
+                    const exitTime = Timestamp.now();
+                    await updateDoc(docRef.ref, { exitTime, status: "checked-out" });
+                    const entryDate = visitor.entryTime.toDate ? visitor.entryTime.toDate() : new Date(visitor.entryTime);
+                    const exitDate = exitTime.toDate();
+                    showCheckoutConfirmation(visitor.name, visitor.purpose, entryDate, exitDate, phone);
                     phoneInput.value = '';
                 } else {
                     // CHECK IN – show form
@@ -290,20 +327,17 @@
                 console.error(err);
                 showMessage('Error connecting to server. Please try again.', true);
             } finally {
-                // Only reset if we are not showing the check-in form (because that form has its own button)
-                // If we are showing form, we don't need to re-enable this button.
                 if (!document.getElementById('confirmCheckInBtn')) {
                     checkBtn.disabled = false;
                     checkBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Continue';
                     isProcessing = false;
                 } else {
-                    // Form is shown – this button is gone, so no need to reset.
                     isProcessing = false;
                 }
             }
         });
 
-        // Background slideshow
+        // Background slideshow (unchanged)
         const possibleImages = ["1.jpg","1.jpeg","2.jpg","2.jpeg","3.jpg","3.jpeg","4.jpg","4.jpeg","5.jpg","5.jpeg","6.jpg","6.jpeg","7.jpg","7.jpeg","8.jpg","8.jpeg","9.jpg","9.jpeg","10.jpg","10.jpeg","11.jpg","11.jpeg","12.jpg","12.jpeg","13.jpg","13.jpeg","14.jpg","14.jpeg"];
         let validImages = [], currentBgSlide = 0, bgSlideInterval = null;
         const track = document.getElementById('bgSlideshowTrack');
