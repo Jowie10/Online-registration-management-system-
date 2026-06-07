@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDJwJrrhF6LKboNZpwH7-07IHSApN5vKXg",
@@ -14,7 +14,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const visitorsCollection = collection(db, "visitors");
 
-// Smart QR points to the visitor page (index.html in the same folder)
+// Smart QR points to index.html (the visitor page)
 const smartQrUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'index.html';
 
 let allVisitors = [];
@@ -39,7 +39,7 @@ const staticQRDiv = document.getElementById('staticQRCode');
 const downloadQRBtn = document.getElementById('downloadQRBtn');
 const sendEmailBtn = document.getElementById('sendEmailBtn');
 
-// Generate the smart QR code (same as generate-qr.html would produce)
+// Generate the smart QR code preview (200px for modal)
 function generateSmartQR() {
     if (!staticQRDiv) return;
     staticQRDiv.innerHTML = '';
@@ -59,16 +59,19 @@ if (viewQRBtn) {
     });
 }
 document.querySelector('.close-qr')?.addEventListener('click', () => { if (qrModal) qrModal.style.display = 'none'; });
+
+// **FIXED: Download QR button directly saves a high-res PNG (600x600)**
 if (downloadQRBtn) {
     downloadQRBtn.addEventListener('click', () => {
+        const downloadUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(smartQrUrl)}`;
         const link = document.createElement('a');
         link.download = 'smart_gate_qr.png';
-        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(smartQrUrl)}`;
+        link.href = downloadUrl;
         link.click();
     });
 }
 
-// Report history functions (unchanged, but ensure reports include NIN)
+// Report history functions (unchanged)
 function loadReportsHistory() {
     const saved = localStorage.getItem('visitor_reports');
     if (saved) reportsHistory = JSON.parse(saved);
@@ -130,7 +133,7 @@ function applyFiltersAndRender() {
 
 function renderTable(visitors) {
     if (!tableBody) return;
-    if (!visitors.length) { tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No visitors found</td></tr>'; return; }
+    if (!visitors.length) { tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No visitors found</td</tr>'; return; }
     tableBody.innerHTML = visitors.map(visitor => {
         const isCheckedOut = visitor.status === 'checked-out';
         const rowClass = isCheckedOut ? 'class="checked-out-row"' : '';
