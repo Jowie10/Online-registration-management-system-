@@ -65,6 +65,17 @@
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .btn-loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .btn-loading i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -113,6 +124,9 @@
         const checkBtn = document.getElementById('checkStatusBtn');
         const mainCard = document.getElementById('mainCard');
         const messageDiv = document.getElementById('messageArea');
+        
+        // Flag to prevent multiple submissions
+        let isProcessing = false;
 
         function showMessage(text, isError = false) {
             messageDiv.innerHTML = `<div class="message-area ${isError ? 'error' : 'success'}" style="display:block;">${text}</div>`;
@@ -181,38 +195,70 @@
                     <label><i class="fas fa-user-tag"></i> Visiting Person/Dept (optional)</label>
                     <input type="text" id="visitingPerson" placeholder="Who are you visiting?">
                 </div>
-                <button id="confirmCheckInBtn" class="btn-primary">Complete Check In</button>
+                <button id="confirmCheckInBtn" class="btn-primary">
+                    <i class="fas fa-check-circle"></i> Complete Check In
+                </button>
                 <button id="backBtn" class="btn-primary" style="background:#6c757d; margin-top:10px;">Back</button>
             `;
-            document.getElementById('confirmCheckInBtn').addEventListener('click', async () => {
-                const name = document.getElementById('fullName').value.trim();
-                const nin = document.getElementById('nin').value.trim();
-                const purpose = document.getElementById('purpose').value;
-                const visitingPerson = document.getElementById('visitingPerson').value.trim();
-                if (!name || !nin) {
-                    showMessage('Full Name and NIN are required', true);
-                    return;
-                }
-                if (nin.length < 10) {
-                    showMessage('Please enter a valid NIN (at least 10 characters)', true);
-                    return;
-                }
+            
+            const confirmBtn = document.getElementById('confirmCheckInBtn');
+            confirmBtn.addEventListener('click', async () => {
+                // Prevent multiple clicks
+                if (isProcessing) return;
+                isProcessing = true;
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Submitting...';
+                confirmBtn.classList.add('btn-loading');
+                
                 try {
+                    const name = document.getElementById('fullName').value.trim();
+                    const nin = document.getElementById('nin').value.trim();
+                    const purpose = document.getElementById('purpose').value;
+                    const visitingPerson = document.getElementById('visitingPerson').value.trim();
+                    
+                    if (!name || !nin) {
+                        showMessage('Full Name and NIN are required', true);
+                        return;
+                    }
+                    if (nin.length < 10) {
+                        showMessage('Please enter a valid NIN (at least 10 characters)', true);
+                        return;
+                    }
+                    
+                    const normalizedPhone = normalizePhone(phone);
+                    // Double-check duplicate active check-in (server-side)
+                    const activeQuery = query(visitorsCollection, where("phone", "==", normalizedPhone), where("status", "==", "checked-in"));
+                    const activeSnap = await getDocs(activeQuery);
+                    if (!activeSnap.empty) {
+                        showMessage('This phone number is already checked in!', true);
+                        return;
+                    }
+                    
                     const visitorId = `VIS_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
                     await addDoc(visitorsCollection, {
-                        visitorId, name, phone: normalizePhone(phone), nin, purpose, visitingPerson,
+                        visitorId, name, phone: normalizedPhone, nin, purpose, visitingPerson,
                         entryTime: Timestamp.now(), exitTime: null, status: "checked-in"
                     });
                     showPersistentConfirmation({ name, phone, nin, purpose }, true);
                 } catch (err) {
                     console.error(err);
                     showMessage('Check-in failed. Please try again.', true);
+                    // Re-enable button on error so user can retry
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Check In';
+                    confirmBtn.classList.remove('btn-loading');
+                    isProcessing = false;
+                } finally {
+                    // If success, the page will reload from overlay, so no need to re-enable.
+                    // Only re-enable on error case (handled above)
                 }
             });
+            
             document.getElementById('backBtn').addEventListener('click', () => location.reload());
         }
 
         checkBtn.addEventListener('click', async () => {
+            if (isProcessing) return;
             const rawPhone = phoneInput.value.trim();
             if (!rawPhone) {
                 showMessage('Please enter your phone number', true);
@@ -223,6 +269,7 @@
                 return;
             }
             const phone = normalizePhone(rawPhone);
+            isProcessing = true;
             checkBtn.disabled = true;
             checkBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Checking...';
             try {
@@ -236,19 +283,27 @@
                     showPersistentConfirmation({ name: visitor.name, phone }, false);
                     phoneInput.value = '';
                 } else {
-                    // CHECK IN
+                    // CHECK IN – show form
                     showCheckInForm(phone);
                 }
             } catch (err) {
                 console.error(err);
                 showMessage('Error connecting to server. Please try again.', true);
             } finally {
-                checkBtn.disabled = false;
-                checkBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Continue';
+                // Only reset if we are not showing the check-in form (because that form has its own button)
+                // If we are showing form, we don't need to re-enable this button.
+                if (!document.getElementById('confirmCheckInBtn')) {
+                    checkBtn.disabled = false;
+                    checkBtn.innerHTML = '<i class="fas fa-arrow-right"></i> Continue';
+                    isProcessing = false;
+                } else {
+                    // Form is shown – this button is gone, so no need to reset.
+                    isProcessing = false;
+                }
             }
         });
 
-        // Background slideshow (identical to your style.css)
+        // Background slideshow
         const possibleImages = ["1.jpg","1.jpeg","2.jpg","2.jpeg","3.jpg","3.jpeg","4.jpg","4.jpeg","5.jpg","5.jpeg","6.jpg","6.jpeg","7.jpg","7.jpeg","8.jpg","8.jpeg","9.jpg","9.jpeg","10.jpg","10.jpeg","11.jpg","11.jpeg","12.jpg","12.jpeg","13.jpg","13.jpeg","14.jpg","14.jpeg"];
         let validImages = [], currentBgSlide = 0, bgSlideInterval = null;
         const track = document.getElementById('bgSlideshowTrack');
