@@ -31,6 +31,7 @@ const peakHourSpan = document.getElementById('peakHour');
 const longestStaySpan = document.getElementById('longestStay');
 const searchInput = document.getElementById('searchInput');
 const statusFilter = document.getElementById('statusFilter');
+const purposeFilter = document.getElementById('purposeFilter');
 const dateFilter = document.getElementById('dateFilter');
 const startDateFilter = document.getElementById('startDateFilter');
 const endDateFilter = document.getElementById('endDateFilter');
@@ -47,9 +48,10 @@ const qrModal = document.getElementById('qrModal');
 const staticQRDiv = document.getElementById('staticQRCode');
 const downloadQRBtn = document.getElementById('downloadQRBtn');
 const sendEmailBtn = document.getElementById('sendEmailBtn');
+const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 
 // Date range state
-let currentDateRange = { start: null, end: null }; // for filtering exports
+let currentDateRange = { start: null, end: null };
 
 // Helper: get date from visitor entry time
 function getEntryDate(visitor) {
@@ -129,7 +131,7 @@ function updateDynamicStats() {
   if (mostVisitedDeptSpan) mostVisitedDeptSpan.textContent = calculateMostVisited();
 }
 
-// ========== QR CODE MODAL (unchanged) ==========
+// ========== QR CODE MODAL ==========
 function generateSmartQR() {
   if (!staticQRDiv) return;
   staticQRDiv.innerHTML = '';
@@ -186,6 +188,11 @@ window.viewDetails = (id) => {
   if(v) alert(`Visitor Details:\n\nName: ${v.name}\nPhone: ${v.phone}\nNIN: ${v.nin || '—'}\nID: ${v.visitorId}\nPurpose: ${v.purpose}\nVisiting: ${v.visitingPerson || 'N/A'}\nEntry: ${v.entryTime?.toDate?.().toLocaleString()}\nExit: ${v.exitTime ? v.exitTime.toDate?.().toLocaleString() : 'Not checked out'}\nStatus: ${v.status === 'checked-in' ? 'Inside' : 'Left'}`);
 };
 
+// Make export functions globally available for inline buttons
+window.exportToCSV = exportToCSV;
+window.exportToPDF = exportToPDF;
+window.emailReport = emailReport;
+
 // ========== REALTIME LISTENER ==========
 function startRealtimeListener() {
   onSnapshot(visitorsCollection, (snapshot) => {
@@ -194,7 +201,7 @@ function startRealtimeListener() {
     allVisitors.sort((a,b) => (b.entryTime?.toDate?.() || new Date(b.entryTime)) - (a.entryTime?.toDate?.() || new Date(a.entryTime)));
     applyFiltersAndRender();
     updateStats();
-    updateDynamicStats();  // Update peak hour, longest stay, most visited
+    updateDynamicStats();
   });
 }
 
@@ -208,7 +215,6 @@ function updateStats() {
   if(leftTodayCount) leftTodayCount.textContent = leftToday;
   if(totalDailyCount) totalDailyCount.textContent = daily;
   
-  // Calculate average stay duration (for those checked out today or all? Keep as all checked-out)
   const checkedOut = allVisitors.filter(v => v.exitTime && v.status === "checked-out");
   let totalMinutes = 0;
   checkedOut.forEach(v => {
@@ -225,10 +231,13 @@ function getFilteredVisitors() {
   let filtered = [...allVisitors];
   const term = searchInput?.value.toLowerCase() || '';
   if(term) filtered = filtered.filter(v => v.name?.toLowerCase().includes(term) || v.phone?.includes(term) || v.visitorId?.toLowerCase().includes(term));
+  
   const status = statusFilter?.value || 'all';
   if(status !== 'all') filtered = filtered.filter(v => v.status === status);
   
-  // Date range filter (used by export)
+  const purpose = purposeFilter?.value || 'all';
+  if(purpose !== 'all') filtered = filtered.filter(v => v.purpose === purpose);
+  
   if (currentDateRange.start && currentDateRange.end) {
     const startDate = new Date(currentDateRange.start);
     startDate.setHours(0,0,0,0);
@@ -253,7 +262,7 @@ function applyFiltersAndRender() {
 // ========== RENDER TABLE ==========
 function renderTable(visitors) {
   if (!tableBody) return;
-  if (!visitors.length) { tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No visitors found</td</td>'; return; }
+  if (!visitors.length) { tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No visitors found</td</tr>'; return; }
   tableBody.innerHTML = visitors.map(visitor => {
     const isCheckedOut = visitor.status === 'checked-out';
     const rowClass = isCheckedOut ? 'class="checked-out-row"' : '';
@@ -275,9 +284,9 @@ function renderTable(visitors) {
 }
 function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
 
-// ========== EXPORT FUNCTIONS WITH DATE RANGE ==========
+// ========== EXPORT FUNCTIONS ==========
 function getExportData() {
-  return getFilteredVisitors(); // reuse the same filter logic (including date range)
+  return getFilteredVisitors();
 }
 
 function exportToCSV() {
@@ -292,43 +301,75 @@ function exportToCSV() {
   const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(["\uFEFF"+csv], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
-  saveReport(`visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`, url, 'csv');
+  const filename = `visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.csv`;
+  
+  // Save to history
+  saveReport(filename, url, 'csv');
+  
+  // Trigger download
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  
+  // Clean up
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 function exportToPDF() {
-  if(typeof jspdf === 'undefined') { alert("jsPDF not loaded."); return; }
+  if (typeof jspdf === 'undefined') {
+    alert("jsPDF library not loaded. Please check your internet connection and refresh the page.");
+    return;
+  }
   const data = getExportData();
   const { jsPDF } = jspdf;
   const doc = new jsPDF();
-  doc.setFontSize(18); doc.text("Visitor Management Report",20,20);
-  doc.setFontSize(10); doc.text(`Generated: ${new Date().toLocaleString()}`,20,28);
-  doc.text(`Filtered Visitors Count: ${data.length}`,20,35);
-  doc.text(`Currently Inside (filtered): ${data.filter(v=>v.status==='checked-in').length}`,20,41);
-  let y=50; doc.setFontSize(9);
-  data.forEach((v,i)=>{
-    if(y>270){ doc.addPage(); y=20; }
-    doc.text(`${i+1}. ${v.name} (${v.visitorId}) - ${v.status==='checked-in'?'Inside':'Left'}`,20,y);
-    y+=6;
+  doc.setFontSize(18);
+  doc.text("Visitor Management Report", 20, 20);
+  doc.setFontSize(10);
+  doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28);
+  doc.text(`Filtered Visitors Count: ${data.length}`, 20, 35);
+  doc.text(`Currently Inside (filtered): ${data.filter(v=>v.status==='checked-in').length}`, 20, 41);
+  let y = 50;
+  doc.setFontSize(9);
+  data.forEach((v,i) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    doc.text(`${i+1}. ${v.name} (${v.visitorId}) - ${v.status==='checked-in'?'Inside':'Left'}`, 20, y);
+    y += 6;
   });
+  const filename = `visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.pdf`;
+  
+  // Save to history (create blob first)
   const pdfBlob = doc.output('blob');
   const url = URL.createObjectURL(pdfBlob);
-  saveReport(`visitor_report_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.pdf`, url, 'pdf');
+  saveReport(filename, url, 'pdf');
+  
+  // Trigger download
+  doc.save(filename);
+  
+  // Clean up
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 function saveReport(name, dataUrl, type) {
   reportsHistory.unshift({name, dataUrl, type, date: new Date().toISOString()});
-  if(reportsHistory.length>20) reportsHistory.pop();
-  saveReportsHistory(); renderReportsList();
+  if(reportsHistory.length > 20) reportsHistory.pop();
+  saveReportsHistory();
+  renderReportsList();
 }
 
-function emailReport() { if(emailModal) emailModal.style.display = 'flex'; }
+function emailReport() { 
+  if(emailModal) emailModal.style.display = 'flex'; 
+}
+
 document.querySelector('.close-email')?.addEventListener('click',()=>{ if(emailModal) emailModal.style.display='none'; });
 if(sendEmailBtn){
   sendEmailBtn.addEventListener('click',()=>{
     const email = document.getElementById('emailRecipient')?.value;
     if(!email){ alert("Enter recipient email"); return; }
+    const data = getExportData();
     const subj = encodeURIComponent('Visitor Management Report');
-    const body = encodeURIComponent(`Visitor Report\nGenerated: ${new Date().toLocaleString()}\nFiltered Visitors: ${getExportData().length}\nCurrently Inside (filtered): ${getExportData().filter(v=>v.status==='checked-in').length}`);
+    const body = encodeURIComponent(`Visitor Report\nGenerated: ${new Date().toLocaleString()}\nFiltered Visitors: ${data.length}\nCurrently Inside (filtered): ${data.filter(v=>v.status==='checked-in').length}`);
     window.location.href = `mailto:${email}?subject=${subj}&body=${body}`;
     alert(`Email client opened for ${email}`);
     if(emailModal) emailModal.style.display='none';
@@ -343,11 +384,10 @@ function generateWeeklyReport() {
     alert("Please select both start and end dates for the weekly report.");
     return;
   }
-  // Set the global date range and refresh the filtered view (optional)
   currentDateRange.start = start;
   currentDateRange.end = end;
-  applyFiltersAndRender();  // show only those records in the table
-  // Then export to CSV (or PDF) automatically? We'll give user choice.
+  if (dateFilter) dateFilter.value = '';
+  applyFiltersAndRender();
   alert(`Date range set from ${start} to ${end}. Use Export CSV or PDF to save the weekly report.`);
 }
 
@@ -364,18 +404,17 @@ if (applyDateRangeBtn) {
     }
     currentDateRange.start = start;
     currentDateRange.end = end;
-    // clear the single date filter if any
     if (dateFilter) dateFilter.value = '';
     applyFiltersAndRender();
   });
 }
 
-// Clear filters (existing clear button)
-const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+// Clear filters
 if (clearFiltersBtn) {
   clearFiltersBtn.addEventListener('click', () => {
     if (searchInput) searchInput.value = '';
     if (statusFilter) statusFilter.value = 'all';
+    if (purposeFilter) purposeFilter.value = 'all';
     if (dateFilter) dateFilter.value = '';
     if (startDateFilter) startDateFilter.value = '';
     if (endDateFilter) endDateFilter.value = '';
@@ -385,18 +424,20 @@ if (clearFiltersBtn) {
   });
 }
 
-// Event listeners for existing filters
+// Event listeners for filters
 if (refreshBtn) refreshBtn.addEventListener('click', () => applyFiltersAndRender());
 if (searchInput) searchInput.addEventListener('input', applyFiltersAndRender);
 if (statusFilter) statusFilter.addEventListener('change', applyFiltersAndRender);
+if (purposeFilter) purposeFilter.addEventListener('change', applyFiltersAndRender);
 if (dateFilter) dateFilter.addEventListener('change', () => {
-  // clear date range when single date is used
   currentDateRange.start = null;
   currentDateRange.end = null;
   if (startDateFilter) startDateFilter.value = '';
   if (endDateFilter) endDateFilter.value = '';
   applyFiltersAndRender();
 });
+
+// Connect export buttons
 if (exportPdfBtn) exportPdfBtn.addEventListener('click', exportToPDF);
 if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportToCSV);
 if (emailReportBtn) emailReportBtn.addEventListener('click', emailReport);
